@@ -13,9 +13,9 @@
 require_relative "dinie/version"
 
 # --- runtime (hand-written — CODEOWNER humans — stories 002–005) ---------------
-# require_relative "dinie/runtime/model"
-# require_relative "dinie/runtime/errors"
-# require_relative "dinie/runtime/request_options"
+require_relative "dinie/runtime/model"
+require_relative "dinie/runtime/errors"
+require_relative "dinie/runtime/request_options"
 # require_relative "dinie/runtime/idempotency"
 # require_relative "dinie/runtime/rate_limit"
 # require_relative "dinie/runtime/retry"
@@ -26,7 +26,7 @@ require_relative "dinie/version"
 # require_relative "dinie/runtime/webhooks"
 
 # --- generated (hand-authored V0.3 — CODEOWNER bot — stories 006–011) ----------
-# require_relative "dinie/generated/errors/registry"
+require_relative "dinie/generated/errors/registry"
 # require_relative "dinie/generated/types"
 # require_relative "dinie/generated/events"
 # require_relative "dinie/generated/resources"
