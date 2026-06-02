@@ -68,7 +68,15 @@ module Dinie
         token_manager: @token_manager, base_url: @base_url, timeout: timeout,
         max_retries: max_retries, idempotency: idempotency, connection: @connection
       )
-      # Resources (customers, credit_offers, …) hang off `@http` in stories 007–015.
+      # Resources hang off the shared `@http`; each is memoized on first access (stories 007–010).
+    end
+
+    # The customers resource — customers + KYC + bank-account + biometrics + the customer
+    # credit-offers subresource (story 007).
+    #
+    # @return [Dinie::Resources::Customers]
+    def customers
+      @customers ||= Resources::Customers.new(@http)
     end
 
     # The latest rate-limit snapshot from the most recent response; `nil` before the first call.
