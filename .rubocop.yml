@@ -40,3 +40,13 @@ Metrics/AbcSize:
 Metrics/ParameterLists:
   Exclude:
     - "lib/dinie/generated/**/*"
+# Discriminated-union dispatches (KYC requirement/upload — story 009; webhook events — story 011)
+# are table-driven `case/when` over the openapi `discriminator.mapping`: inherently high branch
+# count, mechanical, and template-emittable by the V0.4 generator. Same relaxed Metrics bar as the
+# rest of the generated layer (not hand-tuned control flow).
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "lib/dinie/generated/**/*"
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "lib/dinie/generated/**/*"

@@ -3,7 +3,9 @@
 require "json"
 require "uri"
 require "faraday"
+require "faraday/multipart"
 require "faraday/net_http_persistent"
+require_relative "multipart"
 
 module Dinie
   module Internal
@@ -242,11 +244,13 @@ module Dinie
         Idempotency.generate_key
       end
 
-      # Serialize a request body: Hash/Array → JSON, a String is assumed already-serialized JSON,
-      # `nil` sends no body. Returns `[body_or_nil, content_type_or_nil]`. (Multipart KYC uploads
-      # arrive in story 009; this is the JSON path.)
+      # Serialize a request body: a {Multipart} becomes a Faraday multipart body tagged with a bare
+      # `multipart/form-data` content type (Faraday's `:multipart` middleware appends the boundary
+      # and encodes it — story 009); a Hash/Array → JSON; a String is assumed already-serialized
+      # JSON; `nil` sends no body. Returns `[body_or_nil, content_type_or_nil]`.
       def serialize_body(body)
         return [nil, nil] if body.nil?
+        return [body.to_faraday_body, Multipart::CONTENT_TYPE] if body.is_a?(Multipart)
         return [body, JSON_CONTENT_TYPE] if body.is_a?(String)
 
         [JSON.generate(body), JSON_CONTENT_TYPE]
@@ -312,6 +316,7 @@ module Dinie
       # token POST). This builder is intentionally plain — do NOT mount logging here.
       def build_connection(adapter)
         Faraday.new(url: @base_url) do |faraday|
+          faraday.request(:multipart)
           faraday.adapter(adapter || :net_http_persistent)
         end
       end

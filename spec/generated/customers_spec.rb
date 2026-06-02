@@ -250,19 +250,47 @@ RSpec.describe Dinie::Resources::Customers do
     end
   end
 
-  describe "KYC seam → story 009 (shells)" do
-    it "raises NotImplementedError from start_kyc_review" do
-      expect { customers.start_kyc_review(customer_id) }
-        .to raise_error(NotImplementedError, /story 009/)
-    end
+  # The KYC block (story 009) is implemented; its exhaustive per-variant matrix (the 9 requirement
+  # + 10 upload variants, the discriminated dispatch, multipart shape) lives in `kyc_spec.rb`. Here
+  # we cover only the customers-resource wiring: the review trigger and the subresource memoization.
+  describe "KYC block (story 009)" do
+    it "start_kyc_review POSTs to /kyc-review and returns nil (202)" do
+      url = "#{base_url}/customers/#{customer_id}/kyc-review"
+      stub_request(:post, url).to_return(status: 202, body: "")
 
-    it "raises NotImplementedError from kyc_attachments.create" do
-      expect { customers.kyc_attachments.create(customer_id, evidence_type: "cnh") }
-        .to raise_error(NotImplementedError, /story 009/)
+      expect(customers.start_kyc_review(customer_id)).to be_nil
+      expect(a_request(:post, url)).to have_been_made
     end
 
     it "exposes kyc_attachments as a memoized subresource" do
       expect(customers.kyc_attachments).to be(customers.kyc_attachments)
+    end
+  end
+
+  describe "Customer#kyc hydration (story 009 — discriminated union recursion)" do
+    let(:url) { "#{base_url}/customers/#{customer_id}" }
+
+    it "hydrates the kyc array into concrete Kyc::*Requirement variants" do
+      wire = customer_wire(status: "under_review").merge(
+        kyc: [
+          { requirement_type: "identity", requirement_id: "identity_003XXXXXXXXXXXXXXX", label: "Doc",
+            mandatory: true, subject: { id: "003XXXXXXXXXXXXXXX", name: "João", subject_type: "applicant" } },
+          { requirement_type: "company_document", requirement_id: "company_document", label: "CCMEI",
+            mandatory: true }
+        ]
+      )
+      stub_request(:get, url).to_return(status: 200, body: JSON.generate(wire))
+
+      customer = customers.retrieve(customer_id)
+
+      expect(customer.kyc.map(&:class)).to eq([Dinie::Kyc::IdentityRequirement, Dinie::Kyc::CompanyDocumentRequirement])
+      expect(customer.kyc.first.subject).to be_a(Dinie::Kyc::Subject)
+    end
+
+    it "passes an empty kyc array through as []" do
+      stub_request(:get, url).to_return(status: 200, body: JSON.generate(customer_wire))
+
+      expect(customers.retrieve(customer_id).kyc).to eq([])
     end
   end
 end

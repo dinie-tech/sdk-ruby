@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "../../runtime/paginator"
+require_relative "../../runtime/multipart"
 require_relative "../types/customer"
 require_relative "../types/customer_bank_account"
 require_relative "../types/biometrics_session"
 require_relative "../types/credit_offer"
+require_relative "../types/kyc"
 
 # `Dinie::Resources::Customers` — the largest resource on the frozen surface (architecture §3.1,
 # §3.2). Ports `sdk-js` `src/generated/resources/customers.ts`. This is THE exemplar resource:
@@ -32,13 +34,13 @@ require_relative "../types/credit_offer"
 # `@http`; the parent `customer_id` is their **first positional argument**, the rest kwargs. The
 # same shape backs `loans.transactions` (story 008).
 #
-# ── KYC seam → story 009 ──
-# The KYC block (the ~41 discriminated-union types, the multipart upload field-map, and the review
-# trigger) is owned by story 009. Here `kyc_attachments.create` and `start_kyc_review` exist with
-# the correct signatures but raise {NotImplementedError} pointing at 009 — a clean seam, no
-# half-built union/multipart. `Customer.kyc` likewise stays a raw pass-through (006); 009 refines
-# `Customer.deserialize` to recurse into `Dinie::Kyc::*`. Specs here never assume the final `kyc`
-# shape.
+# ── KYC block (story 009) ──
+# `start_kyc_review` (POST `/customers/{id}/kyc-review` → 202, no content → `nil`) and
+# `kyc_attachments.create` (multipart POST `/customers/{id}/kyc-attachments` → `Kyc::AttachmentResponse`)
+# are implemented here over the KYC types in `../types/kyc/`. The upload serializes the discriminated
+# `evidence_type` union to a field-map ({Dinie::Kyc.serialize_upload}) and ships it as
+# `multipart/form-data` via {Dinie::Internal::Multipart} (the runtime seam). `Customer.kyc` hydrates
+# through the same discriminated union ({Dinie::Kyc.deserialize_requirement}).
 #
 # ── runtime ↔ generated boundary (architecture §4) ──
 # Lives in `generated/`. Imports only from `runtime/` (the transport + paginator) and sibling
@@ -149,18 +151,17 @@ module Dinie
         BiometricsSession.deserialize(raw)
       end
 
-      # KYC review trigger (`POST /customers/{id}/kyc-review`). **Shell → story 009.** Signals that
-      # all KYC documents are uploaded and ready for review. Implemented with the rest of the KYC
-      # block in story 009; the signature is frozen here so the surface is stable.
+      # KYC review trigger (`POST /customers/{id}/kyc-review`). Signals that all KYC documents are
+      # uploaded and ready for review (also handles resubmission after corrections). Body-less; the
+      # endpoint returns 202 with no content, so this returns `nil`. POST → the transport
+      # auto-carries an `X-Idempotency-Key` (idempotent).
       #
       # @param customer_id [String] the customer id (`cust_…`)
       # @param request_options [Hash] per-call overrides
-      # @return [nil] (202 — no content) once story 009 implements it
-      # @raise [NotImplementedError] until story 009 lands the KYC block
+      # @return [nil] (202 — no content)
       def start_kyc_review(customer_id, request_options: {})
-        raise NotImplementedError,
-              "customers.start_kyc_review is part of the KYC block — implemented in story 009 " \
-              "(POST /customers/{id}/kyc-review → 202). customer_id=#{customer_id.inspect}"
+        @http.request(method: :post, path: "/customers/#{customer_id}/kyc-review", request_options:)
+        nil
       end
 
       # The customer credit-offers subresource (`customers.credit_offers`).
@@ -218,29 +219,39 @@ module Dinie
         end
       end
 
-      # `customers.kyc_attachments` — **shell → story 009.** Holds the same injected `@http`;
-      # `customer_id` is the first positional argument. The multipart upload field-map and the
-      # discriminated `evidence_type` union (~10 variants) are owned by story 009.
+      # `customers.kyc_attachments` — the KYC attachment-upload subresource (story 009). Holds the
+      # same injected `@http`; `customer_id` is the first positional argument.
       class KycAttachments
         # @param http [Dinie::Internal::HttpClient] the shared transport
         def initialize(http)
           @http = http
         end
 
-        # Upload a KYC attachment (`POST /customers/{id}/kyc-attachments`, `multipart/form-data`).
-        # **Shell → story 009.** Implemented with the rest of the KYC block; the signature is frozen
-        # here so the surface is stable.
+        # Upload a KYC attachment (`POST /customers/{id}/kyc-attachments`, `multipart/form-data` →
+        # 201). The `**upload` kwargs are one member of the discriminated `evidence_type` union
+        # (architecture §6.3): `evidence_type:`, `requirement_id:`, `attachment_type:`, plus either a
+        # binary `file:` (the nine document variants) or a scalar `value:` (the `email` variant).
+        # {Dinie::Kyc.serialize_upload} dispatches on `evidence_type` to the right multipart
+        # field-map; {Dinie::Internal::Multipart} ships it as `multipart/form-data`. POST → the
+        # transport auto-carries an `X-Idempotency-Key` (idempotent). The response wraps the FULL
+        # post-upload requirement state.
         #
         # @param customer_id [String] the customer id (`cust_…`) — first positional argument
-        # @param upload [Hash{Symbol => Object}] the multipart upload fields (`evidence_type:`, …)
+        # @param upload [Hash{Symbol => Object}] one upload-union member —
+        #   `evidence_type:`, `requirement_id:`, `attachment_type:`, and `file:` or `value:`
         # @param request_options [Hash] per-call overrides
-        # @return [Dinie::Kyc::AttachmentResponse] once story 009 implements it
-        # @raise [NotImplementedError] until story 009 lands the KYC block
+        # @return [Dinie::Kyc::AttachmentResponse] the post-upload requirement state
+        # @raise [Dinie::Error] when `evidence_type` is unknown or the variant's required part is missing
+        # @example Upload the front of a physical CNH
+        #   client.customers.kyc_attachments.create(
+        #     "cust_…", evidence_type: "cnh", requirement_id: "identity_003…",
+        #     attachment_type: "front", file: File.open("cnh-front.jpg")
+        #   )
         def create(customer_id, request_options: {}, **upload)
-          raise NotImplementedError,
-                "customers.kyc_attachments.create is part of the KYC block — implemented in story " \
-                "009 (multipart POST /customers/{id}/kyc-attachments with the discriminated " \
-                "evidence_type union). customer_id=#{customer_id.inspect}"
+          form = Dinie::Kyc.serialize_upload(**upload)
+          body = Dinie::Internal::Multipart.new(fields: form.fields, file: form.file)
+          raw = @http.request(method: :post, path: "/customers/#{customer_id}/kyc-attachments", body:, request_options:)
+          Dinie::Kyc::AttachmentResponse.deserialize(raw)
         end
       end
     end

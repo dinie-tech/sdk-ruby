@@ -8,6 +8,7 @@
 require_relative "types/ids"
 require_relative "types/enums"
 require_relative "types/money"
+require_relative "types/kyc"
 require_relative "types/credential"
 require_relative "types/credit_offer"
 require_relative "types/customer"

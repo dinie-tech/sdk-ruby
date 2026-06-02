@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   # architecture §10/RB15) ships as `faraday-net_http_persistent`, which depends on the underlying
   # `net-http-persistent`. The latter stays pinned explicitly so the pool gem's major is fixed.
   spec.add_dependency "faraday", "~> 2.0"
+  spec.add_dependency "faraday-multipart", "~> 1.0"
   spec.add_dependency "faraday-net_http_persistent", "~> 2.0"
   spec.add_dependency "net-http-persistent", "~> 4.0"
 

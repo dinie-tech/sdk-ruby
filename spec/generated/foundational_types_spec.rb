@@ -5,6 +5,16 @@
 # stays Integer, Money stays Float, ID prefixes, enum constants, deconstruct_keys. Values are
 # taken from the `openapi.yaml @ 3fcfd83` schema examples.
 RSpec.describe "foundational types" do
+  # Recursively dump a hydrated model graph back to wire-shaped Hashes/Arrays/scalars, so the
+  # lossless round-trip also covers the nested KYC union (`kyc` → `Kyc::*Requirement`, story 009).
+  def deep_h(obj)
+    case obj
+    when Dinie::Internal::Model then obj.to_h.transform_values { |value| deep_h(value) }
+    when Array then obj.map { |item| deep_h(item) }
+    else obj
+    end
+  end
+
   let(:customer_wire) do
     {
       cnpj: "12.345.678/0001-90",
@@ -13,7 +23,21 @@ RSpec.describe "foundational types" do
       email: "joao@example.com",
       external_id: "partner-ref-123",
       id: "cust_550e8400e29b41d4a716446655440000",
-      kyc: [{ requirement_type: "identity", status: "pending" }],
+      kyc: [
+        {
+          requirement_type: "identity",
+          requirement_id: "identity_003XXXXXXXXXXXXXXX",
+          label: "Documento de identidade",
+          mandatory: true,
+          subject: { id: "003XXXXXXXXXXXXXXX", name: "Joao Silva", subject_type: "applicant" },
+          submitted: {
+            evidence_type: "cnh",
+            attachments: [{ attachment_type: "front", submitted_at: 1_772_791_200 }],
+            review_status: "pending",
+            review_reason: nil
+          }
+        }
+      ],
       name: "Joao Silva",
       phone: "+5511999999999",
       status: "active",
@@ -57,8 +81,9 @@ RSpec.describe "foundational types" do
   describe "Dinie::Customer — hydrate (deserialize)" do
     subject(:customer) { Dinie::Customer.deserialize(customer_wire) }
 
-    it "round-trips a full wire object losslessly (to_h == wire; snake = snake, zero conversion)" do
-      expect(customer.to_h).to eq(customer_wire)
+    it "round-trips a full wire object losslessly (deep dump == wire; snake = snake, zero conversion)" do
+      # `deep_h` recurses through the hydrated KYC union; `to_h` alone is shallow (kyc → objects).
+      expect(deep_h(customer)).to eq(customer_wire)
     end
 
     it "keeps epoch timestamps as Integer (R-EPOCH — never Time)" do
@@ -72,8 +97,11 @@ RSpec.describe "foundational types" do
       expect(customer.to_h).not_to have_key(:tax_id)
     end
 
-    it "passes kyc through raw (story 009 refines to Kyc::*)" do
-      expect(customer.kyc).to eq([{ requirement_type: "identity", status: "pending" }])
+    it "hydrates kyc into the discriminated Kyc::* union (story 009)" do
+      expect(customer.kyc.map(&:class)).to eq([Dinie::Kyc::IdentityRequirement])
+      expect(customer.kyc.first.requirement_type).to eq("identity")
+      expect(customer.kyc.first.subject).to be_a(Dinie::Kyc::Subject)
+      expect(customer.kyc.first.submitted).to be_a(Dinie::Kyc::Submitted)
     end
 
     it "sets an absent optional (kyc, omitted during `creating`) to nil but still declares it" do
@@ -85,7 +113,7 @@ RSpec.describe "foundational types" do
 
     it "is explicit, not a blind symbolize — ignores unknown wire keys (e.g. a dropped `object`)" do
       hydrated = Dinie::Customer.deserialize(customer_wire.merge(object: "customer"))
-      expect(hydrated.to_h).to eq(customer_wire)
+      expect(deep_h(hydrated)).to eq(customer_wire)
     end
 
     it "supports pattern matching via deconstruct_keys" do

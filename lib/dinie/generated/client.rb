@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "faraday/multipart"
 require "faraday/net_http_persistent"
 
 module Dinie
@@ -166,11 +167,17 @@ module Dinie
     # `POST /auth/token`, whose `Authorization: Basic` header carries the client secret and is
     # redacted by the middleware. It reads the `log_level:` / `logger:` captured by this method.
     #
+    # The `:multipart` request middleware (story 009) is mounted OUTERMOST — ahead of logging — so a
+    # KYC attachment upload ({Internal::Multipart}) is encoded into its `multipart/form-data` body
+    # BEFORE the logger observes it, keeping the binary out of the log (truncated, never raw). It is
+    # a no-op for every JSON request (the body is an already-serialized String, not a multipart Hash).
+    #
     # The middleware is NOT mounted in {Internal::HttpClient#build_connection}: that builder is the
     # standalone fallback the composed client never uses; THIS shared connection is the one every
     # request (resource calls AND the token POST) actually rides.
     def build_connection(log_level:, logger:, adapter:)
       Faraday.new(url: @base_url) do |faraday|
+        faraday.request :multipart
         faraday.use Internal::Middleware::Logging, level: log_level, logger: logger
         faraday.adapter(adapter || :net_http_persistent)
       end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../runtime/model"
+require_relative "kyc"
 
 # `Customer` + the **hydrate/dump convention every resource/event story (007–011) copies**
 # (architecture §6, §3.3). Hand-authored in V0.3 to mirror what the V0.5 generator will emit
@@ -46,7 +47,8 @@ require_relative "../../runtime/model"
 #   email         → String
 #   external_id   → String | nil   (required, nullable)
 #   id            → CustomerId     (`cust_…`, NOT `cus_` — architecture R2)
-#   kyc           → Array | nil    (optional; raw pass-through here, story 009 refines to Kyc::*)
+#   kyc           → Array<Kyc::*Requirement> | nil  (optional; hydrated through the discriminated
+#                                  `Dinie::Kyc.deserialize_requirement` — story 009)
 #   name          → String | nil   (required, nullable)
 #   phone         → String         (E.164)
 #   status        → String         (CustomerStatus enum)
@@ -68,9 +70,9 @@ module Dinie
     # (`cnpj`/`name`/`external_id`/`trading_name`) are carried as `String | nil`. `kyc` is the
     # one optional field — absent during `creating`, so it arrives as `nil`.
     #
-    # NOTE (story 009): `kyc` is a raw pass-through here. Story 009 refines it to recurse into
-    # the discriminated `Dinie::Kyc::*` union —
-    # `kyc: raw[:kyc]&.map { |r| Dinie::Kyc.deserialize_requirement(r) }`.
+    # `kyc` recurses into the discriminated KYC requirement union (story 009): each entry hydrates
+    # to a concrete `Dinie::Kyc::*Requirement` via {Dinie::Kyc.deserialize_requirement}, dispatched
+    # by `requirement_type`. `nil` (absent) and `[]` (none yet) both pass through cleanly.
     #
     # @param raw [Hash{Symbol => Object}] the wire object (snake_case keys)
     # @return [Customer]
@@ -82,7 +84,7 @@ module Dinie
         email: raw[:email],
         external_id: raw[:external_id],
         id: raw[:id],
-        kyc: raw[:kyc],
+        kyc: raw[:kyc]&.map { |requirement| Dinie::Kyc.deserialize_requirement(requirement) },
         name: raw[:name],
         phone: raw[:phone],
         status: raw[:status],

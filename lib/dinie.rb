@@ -23,6 +23,7 @@ require_relative "dinie/runtime/http"
 require_relative "dinie/runtime/token_manager"
 require_relative "dinie/runtime/logger"
 require_relative "dinie/runtime/paginator"
+require_relative "dinie/runtime/multipart"
 # require_relative "dinie/runtime/webhooks"
 
 # --- generated (hand-authored V0.3 — CODEOWNER bot — stories 006–011) ----------
