@@ -25,8 +25,12 @@ Gem::Specification.new do |spec|
   spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("sig/**/*.rbs") + %w[README.md LICENSE CHANGELOG.md]
   spec.require_paths = ["lib"]
 
-  # Runtime dependencies (ubiquitous; architecture §19).
+  # Runtime dependencies (ubiquitous; architecture §19). Faraday 2.x extracted its adapters into
+  # separate gems, so the `:net_http_persistent` adapter (real connection pool + keep-alive,
+  # architecture §10/RB15) ships as `faraday-net_http_persistent`, which depends on the underlying
+  # `net-http-persistent`. The latter stays pinned explicitly so the pool gem's major is fixed.
   spec.add_dependency "faraday", "~> 2.0"
+  spec.add_dependency "faraday-net_http_persistent", "~> 2.0"
   spec.add_dependency "net-http-persistent", "~> 4.0"
 
   # Development dependencies (declared here; see `.rubocop.yml` Gemspec/DevelopmentDependencies).
