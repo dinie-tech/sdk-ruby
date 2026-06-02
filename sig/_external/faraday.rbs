@@ -1,0 +1,44 @@
+# Vendored minimal Faraday stub (architecture §5.2, story 013 / §21.3).
+#
+# Faraday + net-http-persistent ship no bundled RBS and are not in `rbs collection` at a usable
+# fidelity, so this stub declares only the Faraday surface the SDK references — entry points return
+# `untyped`, so every downstream Faraday interaction (connection, request env, response) type-checks
+# permissively without inventing precise third-party signatures. This is the documented seam that
+# keeps `steep check` informative in v1 (the `# §21.3 decision` in the Steepfile): replace it with a
+# real upstream Faraday RBS to promote the gate to blocking.
+#
+# Scope: only what `lib/dinie/runtime/{http,token_manager,logger,multipart}.rb` touch as Faraday
+# constants. Everything else flows through `untyped`.
+
+module Faraday
+  # `Faraday.new(url:) { |conn| ... }` — returns an untyped connection so `conn.request` /
+  # `conn.use` / `conn.adapter` / `conn.run_request` all resolve permissively.
+  def self.new: (*untyped, **untyped) ?{ (untyped) -> void } -> untyped
+
+  # Base for the custom logging middleware (`Internal::Middleware::Logging < Faraday::Middleware`).
+  class Middleware
+    def initialize: (untyped app) -> void
+    def call: (untyped env) -> untyped
+  end
+
+  # Transport error hierarchy the retry loop rescues + classifies.
+  class Error < StandardError
+  end
+
+  class TimeoutError < Error
+  end
+
+  class ConnectionFailed < Error
+  end
+
+  # Multipart parts the KYC upload wrapper builds / type-checks against.
+  module Multipart
+    class FilePart
+      def initialize: (*untyped) -> void
+    end
+
+    class ParamPart
+      def initialize: (*untyped) -> void
+    end
+  end
+end

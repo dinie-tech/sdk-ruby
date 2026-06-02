@@ -1,0 +1,33 @@
+# `credit_offer.available` + `credit_offer.expired` events — one schema, two classes (architecture
+# §3.1, §8). Mirrors `lib/dinie/generated/events/credit_offer.rb`. `data` is bespoke (NOT `CreditOffer`).
+
+module Dinie
+  module Events
+    class CreditOfferEventData < Internal::Model
+      attr_reader approved_amount: money
+      attr_reader customer_id: customer_id
+      attr_reader due_date_rule: String?
+      attr_reader external_id: String?
+      attr_reader id: credit_offer_id
+      attr_reader installments: Integer
+      attr_reader min_amount: Float
+      attr_reader monthly_interest_rate: Float
+      attr_reader status: credit_offer_status
+      attr_reader valid_until: Integer
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CreditOfferEventData
+    end
+
+    class CreditOfferAvailable < WebhookEventBase
+      attr_reader data: CreditOfferEventData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CreditOfferAvailable
+    end
+
+    class CreditOfferExpired < WebhookEventBase
+      attr_reader data: CreditOfferEventData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CreditOfferExpired
+    end
+  end
+end

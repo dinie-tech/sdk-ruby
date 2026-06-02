@@ -1,0 +1,21 @@
+# `customer.kyc_updated` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/customer_kyc_updated.rb`. `data.kyc` reuses the KYC discriminated union.
+
+module Dinie
+  module Events
+    class CustomerKycUpdatedData < Internal::Model
+      attr_reader external_id: String?
+      attr_reader id: customer_id
+      attr_reader kyc: Array[Kyc::Requirement]
+      attr_reader status: customer_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerKycUpdatedData
+    end
+
+    class CustomerKycUpdated < WebhookEventBase
+      attr_reader data: CustomerKycUpdatedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerKycUpdated
+    end
+  end
+end

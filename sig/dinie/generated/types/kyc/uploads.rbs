@@ -1,0 +1,24 @@
+# KYC upload request serialization + the `KycUpload` discriminated union (DS-DISCRIMINATED-REQUEST,
+# DS-MULTIPART). Mirrors `lib/dinie/generated/types/kyc/uploads.rb`. `serialize_upload` returns an
+# `UploadForm` (a keyword-init `Struct`).
+
+module Dinie
+  module Kyc
+    FILE_UPLOAD_EVIDENCE_TYPES: Array[String]
+
+    # The deterministic multipart representation of a KYC upload (a keyword-init `Struct`): the
+    # ordered scalar `fields` plus the optional binary `file`.
+    class UploadForm
+      attr_accessor fields: Hash[Symbol, untyped]
+      attr_accessor file: untyped
+
+      def self.new: (?fields: Hash[Symbol, untyped], ?file: untyped) -> UploadForm
+      def initialize: (?fields: Hash[Symbol, untyped], ?file: untyped) -> void
+    end
+
+    # Serialize a KYC upload to its `UploadForm` (the scalar field-map + optional binary `file`) by
+    # dispatching on the explicit `evidence_type` discriminator. (Called from the customers resource
+    # via a `**upload` splat — see the §21.3 note on the splat idiom + Steep's static keyword check.)
+    def self.serialize_upload: (evidence_type: String, requirement_id: String, attachment_type: String, ?file: untyped, ?value: String) -> UploadForm
+  end
+end

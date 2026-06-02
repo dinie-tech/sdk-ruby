@@ -1,0 +1,26 @@
+# `customer.under_review` + `customer.active` events — one schema, two classes (architecture §3.1,
+# §8). Mirrors `lib/dinie/generated/events/customer_status.rb`.
+
+module Dinie
+  module Events
+    class CustomerStatusData < Internal::Model
+      attr_reader external_id: String?
+      attr_reader id: customer_id
+      attr_reader status: customer_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerStatusData
+    end
+
+    class CustomerUnderReview < WebhookEventBase
+      attr_reader data: CustomerStatusData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerUnderReview
+    end
+
+    class CustomerActive < WebhookEventBase
+      attr_reader data: CustomerStatusData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerActive
+    end
+  end
+end

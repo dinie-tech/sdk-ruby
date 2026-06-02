@@ -1,0 +1,6 @@
+# `Money` is a plain `Float` (BRL), doc-only (architecture §3.3, §21.2). No runtime class —
+# the value IS a `Float` (mirrors the TS `type Money = number`).
+
+module Dinie
+  type money = Float
+end

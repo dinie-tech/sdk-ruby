@@ -1,0 +1,50 @@
+# `Dinie::Page` — one page of a cursor-paginated list + the auto-pagination engine
+# (architecture §11, RB8). Mirrors `lib/dinie/runtime/paginator.rb`. Part of the public surface.
+#
+# `Page` is generic over its item type so `list*` returns `Page[Customer]`, etc. The item type is
+# bound to `_Identifiable` (every list item responds to `#id` — the next page's cursor).
+
+module Dinie
+  # The structural bound on a `Page`'s items: every paginated item carries an `id` (the cursor).
+  interface _Identifiable
+    def id: () -> String
+  end
+
+  class Page[Elem < _Identifiable]
+    attr_reader data: Array[Elem]
+    attr_reader has_more: bool
+
+    NO_NEXT_PAGE_MESSAGE: String
+    UNSPECIFIED: untyped
+
+    # Build the FIRST page by invoking `fetch_page` with no cursor.
+    def self.from_fetch: [E < _Identifiable] (^(String?) -> Hash[Symbol, untyped] fetch_page) -> Page[E]
+
+    # Wrap a fetched `{ data:, has_more: }` envelope in a `Page`.
+    def self.build: [E < _Identifiable] (Hash[Symbol, untyped] envelope, ^(String?) -> Hash[Symbol, untyped] fetch_page) -> Page[E]
+
+    # A list endpoint is paginated iff its envelope carries `has_more`.
+    def self.paginated?: (untyped envelope) -> bool
+
+    def initialize: (data: Array[Elem], has_more: bool, fetch_page: ^(String?) -> Hash[Symbol, untyped]) -> void
+
+    # Whether a next page can be fetched.
+    def next_page?: () -> bool
+
+    # Fetch the next page (cursor = `id` of this page's last item). Guard with `next_page?`.
+    def next_page: () -> Page[Elem]
+
+    # Auto-paginate: yield every item of this page, then every following page. No block → `Enumerator`.
+    def each: () { (Elem item) -> void } -> self
+            | () -> Enumerator[Elem, self]
+    alias auto_paging_each each
+
+    # Yield page-by-page (manual control). No block → `Enumerator` over the pages.
+    def each_page: () { (Page[Elem] page) -> void } -> self
+                 | () -> Enumerator[Page[Elem], self]
+
+    # The first `count` items across pages (or the very first item), fetched lazily. (`count`
+    # defaults to a private sentinel, so the signature is loose; returns `Elem?` or `Array[Elem]`.)
+    def first: (?untyped count) -> untyped
+  end
+end

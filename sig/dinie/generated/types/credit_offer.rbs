@@ -1,0 +1,24 @@
+# `CreditOffer` — a pre-approved credit offer (`co_…`), read-only (architecture §3.3, §6).
+# Mirrors `lib/dinie/generated/types/credit_offer.rb`. installments XOR min/max — all three
+# declared, exclusivity documented not enforced.
+
+module Dinie
+  class CreditOffer < Internal::Model
+    attr_reader approved_amount: money
+    attr_reader created_at: Integer
+    attr_reader customer_id: customer_id
+    attr_reader due_date_rule: String?
+    attr_reader external_id: String?
+    attr_reader id: credit_offer_id
+    attr_reader installments: Integer?
+    attr_reader max_installments: Integer?
+    attr_reader min_amount: Float
+    attr_reader min_installments: Integer?
+    attr_reader monthly_interest_rate: Float
+    attr_reader status: credit_offer_status
+    attr_reader updated_at: Integer
+    attr_reader valid_until: Integer
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> CreditOffer
+  end
+end

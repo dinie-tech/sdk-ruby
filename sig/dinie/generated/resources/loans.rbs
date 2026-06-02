@@ -1,0 +1,26 @@
+# `Resources::Loans` — the `client.loans` resource + the `loans.transactions` subresource
+# (architecture §3.2, §3.1). Mirrors `lib/dinie/generated/resources/loans.rb`.
+
+module Dinie
+  module Resources
+    class Loans
+      def initialize: (Dinie::Internal::HttpClient http) -> void
+
+      # Create a loan from an accepted credit-offer simulation (`POST /loans`).
+      def create: (credit_offer_id: String, simulation_id: String, installment_count: Integer, installment_amount: Float, first_due_date: String, ?request_options: request_opts) -> Dinie::Loan
+
+      # Retrieve a single loan (`GET /loans/{id}`).
+      def retrieve: (String id, ?request_options: request_opts) -> Dinie::Loan
+
+      # The loan transactions subresource (`loans.transactions`).
+      def transactions: () -> Dinie::Resources::Loans::Transactions
+
+      # `loans.transactions` — list a single loan's installments.
+      class Transactions
+        def initialize: (Dinie::Internal::HttpClient http) -> void
+
+        def list: (String loan_id, ?limit: Integer, ?starting_after: String, ?request_options: request_opts) -> Dinie::Page[Dinie::Transaction]
+      end
+    end
+  end
+end

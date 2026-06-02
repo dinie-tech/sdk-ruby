@@ -1,0 +1,11 @@
+# `BiometricsSession` — a temporary biometrics-capture session, read-only (architecture §3.3, §6).
+# Mirrors `lib/dinie/generated/types/biometrics_session.rb`.
+
+module Dinie
+  class BiometricsSession < Internal::Model
+    attr_reader expires_at: Integer
+    attr_reader session_url: String
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> BiometricsSession
+  end
+end

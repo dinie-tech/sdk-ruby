@@ -1,0 +1,32 @@
+# `Loan` + its `CreateLoanRequest` dump — a contracted loan (`ln_…`) (architecture §3.3, §6).
+# Mirrors `lib/dinie/generated/types/loan.rb`. Read model AND request body.
+
+module Dinie
+  class Loan < Internal::Model
+    attr_reader annual_cet_rate: Float
+    attr_reader annual_interest_rate: Float
+    attr_reader ccb_number: String?
+    attr_reader created_at: Integer
+    attr_reader credit_offer_id: credit_offer_id
+    attr_reader customer_id: customer_id
+    attr_reader disbursement_method: String?
+    attr_reader first_due_date: String
+    attr_reader id: loan_id
+    attr_reader installment_amount: money
+    attr_reader installment_count: Integer
+    attr_reader iof_amount: Float?
+    attr_reader monthly_cet_rate: Float
+    attr_reader monthly_interest_rate: Float
+    attr_reader principal_amount: Float?
+    attr_reader requested_amount: money
+    attr_reader signing_url: String?
+    attr_reader simulation_id: simulation_id
+    attr_reader status: loan_status
+    attr_reader total_amount: money
+    attr_reader updated_at: Integer
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> Loan
+
+    def self.serialize_create: (credit_offer_id: String, simulation_id: String, installment_count: Integer, installment_amount: Float, first_due_date: String) -> Hash[Symbol, untyped]
+  end
+end

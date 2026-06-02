@@ -244,6 +244,7 @@ module Dinie
       end
     end
 
+    # Namespace for the SDK's Faraday middleware (currently just {Middleware::Logging}).
     module Middleware
       # `Logging` — the Faraday response middleware that makes logging the natural hook point
       # (architecture §9, RB12), filling the gap OpenAI Ruby leaves (no logger at all). {Dinie::Client}

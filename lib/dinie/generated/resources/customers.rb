@@ -46,6 +46,9 @@ require_relative "../types/kyc"
 # Lives in `generated/`. Imports only from `runtime/` (the transport + paginator) and sibling
 # `generated/` types — never ad-hoc transport.
 module Dinie
+  # Namespace for the six API resources hung off {Dinie::Client} (`client.customers`,
+  # `client.credit_offers`, …) plus their nested subresources. Each resource holds the shared
+  # {Dinie::Internal::HttpClient}; hand-authored in V0.3, regenerated in V0.5.
   module Resources
     # Customers + KYC + bank-account + biometrics + the customer credit-offers subresource.
     class Customers

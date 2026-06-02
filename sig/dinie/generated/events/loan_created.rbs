@@ -1,0 +1,23 @@
+# `loan.created` event (architecture §3.1, §8). Mirrors `lib/dinie/generated/events/loan_created.rb`.
+
+module Dinie
+  module Events
+    class LoanCreatedData < Internal::Model
+      attr_reader credit_offer_id: credit_offer_id
+      attr_reader customer_id: customer_id
+      attr_reader id: loan_id
+      attr_reader installment_count: Integer
+      attr_reader requested_amount: money
+      attr_reader signing_url: String?
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanCreatedData
+    end
+
+    class LoanCreated < WebhookEventBase
+      attr_reader data: LoanCreatedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanCreated
+    end
+  end
+end

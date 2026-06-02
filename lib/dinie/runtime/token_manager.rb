@@ -62,6 +62,7 @@ module Dinie
       # OAuthError messages for a malformed token payload (kept as constants so the guard clauses
       # stay on one line and read cleanly).
       MISSING_ACCESS_TOKEN = 'OAuth2 token response was missing a valid "access_token".'
+      # {Dinie::OAuthError} message for a token payload missing a valid `expires_in`.
       MISSING_EXPIRES_IN = 'OAuth2 token response was missing a valid "expires_in".'
 
       # @param client_id [String] OAuth2 client id (the Basic-auth username)

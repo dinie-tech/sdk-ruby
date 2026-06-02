@@ -1,0 +1,102 @@
+# Error hierarchy + the `from_response` dispatcher + `parse_retry_after` (architecture §7, §10).
+# Mirrors `lib/dinie/runtime/errors.rb`. The 8 server-response markers are empty subclasses of
+# `APIStatusError` declared in `generated/errors/registry.rbs`.
+
+module Dinie
+  # Root of every error the SDK raises.
+  class Error < StandardError
+  end
+
+  # Base for everything that originates from talking to the Dinie API. `code` / `request_id`
+  # are first-class on every API error.
+  class APIError < Error
+    attr_reader code: String?
+    attr_reader request_id: String?
+
+    def initialize: (?String? message, ?code: String?, ?request_id: String?) -> void
+  end
+
+  # A request never produced a response (DNS failure, socket reset, timeout). Client-side.
+  class APIConnectionError < APIError
+    def initialize: (?String message) -> void
+  end
+
+  # The request exceeded the configured timeout.
+  class APITimeoutError < APIConnectionError
+    def initialize: (?String message) -> void
+  end
+
+  # The API returned a non-2xx response. Base of the openapi-mirrored marker catalog.
+  class APIStatusError < APIError
+    attr_reader status: Integer
+    attr_reader headers: Hash[untyped, untyped]
+    attr_reader body: (Hash[Symbol, untyped] | String | nil)
+    attr_reader type: String?
+    attr_reader title: String?
+    attr_reader detail: String?
+    attr_reader instance: String?
+
+    def initialize: (status: Integer, body: (Hash[Symbol, untyped] | String | nil), headers: Hash[untyped, untyped], ?request_id: String?) -> void
+
+    def self.build_message: (Integer status, untyped body, String? request_id) -> String
+    def self.message_summary: (untyped body) -> String?
+
+    private
+
+    def string_field: (Hash[Symbol, untyped]? problem, Symbol key) -> String?
+  end
+
+  # OAuth2 client-credentials token acquisition/refresh failed (client-side).
+  class OAuthError < Error
+  end
+
+  # A webhook payload failed HMAC signature verification.
+  class WebhookSignatureError < Error
+  end
+
+  # A webhook timestamp fell outside the tolerance window.
+  class WebhookTimestampError < Error
+  end
+
+  # A webhook signature verified, but the payload's `type` is not in the openapi catalog.
+  class UnknownWebhookEventError < Error
+    attr_reader event_type: String
+
+    def initialize: (String event_type) -> void
+  end
+
+  # Maximum honored `Retry-After`, in seconds.
+  RETRY_AFTER_CAP_SECONDS: Integer
+
+  # Parse a `Retry-After` value to seconds, capped at 60. Each argument accepts a String or an
+  # Array (first element used). Returns the wait in seconds, or `nil` when nothing parseable.
+  def self.parse_retry_after: (?(String | Array[String])? retry_after, ?retry_after_ms: (String | Array[String])?) -> Float?
+
+  def self.retry_after_ms_seconds: (untyped value) -> Float?
+  def self.retry_after_seconds: (untyped value) -> Float?
+  def self.http_date_delta: (String raw) -> Float?
+  def self.first_header_value: (untyped value) -> String?
+
+  module Internal
+    # The transport-agnostic error dispatcher (the controlled runtime → generated seam, §4).
+    # `module_function`: methods are declared as instance methods (Steep types `self` as the module
+    # inside them) and are also callable on the module (`Errors.from_response`).
+    module Errors
+      REQUEST_ID_HEADER: String
+
+      # Build the typed error for an HTTP error response: dispatch by Problem Details `type` URL,
+      # then HTTP status, then the ≥500 band fallback.
+      def from_response: (status: Integer, ?headers: Hash[untyped, untyped], ?body: String?, ?force: untyped) -> Dinie::APIStatusError
+      def dispatch: (String? type_url, Integer status) -> untyped
+      def fallback_ctor: (Integer status) -> untyped
+      def parse_problem: (untyped body) -> Hash[Symbol, untyped]?
+      def presentable_body: (untyped body) -> String?
+      def header_request_id: (untyped headers) -> untyped
+      def header_lookup: (untyped headers, String name) -> untyped
+      def string_value: (Hash[Symbol, untyped]? record, Symbol key) -> String?
+
+      # Module-function alias (callable as `Errors.from_response`).
+      def self.from_response: (status: Integer, ?headers: Hash[untyped, untyped], ?body: String?, ?force: untyped) -> Dinie::APIStatusError
+    end
+  end
+end

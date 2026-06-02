@@ -1,0 +1,23 @@
+# `loan.processing` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/loan_processing.rb`.
+
+module Dinie
+  module Events
+    class LoanProcessingData < Internal::Model
+      attr_reader ccb_number: String?
+      attr_reader credit_offer_id: credit_offer_id
+      attr_reader customer_id: customer_id
+      attr_reader disbursement_method: String?
+      attr_reader id: loan_id
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanProcessingData
+    end
+
+    class LoanProcessing < WebhookEventBase
+      attr_reader data: LoanProcessingData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanProcessing
+    end
+  end
+end

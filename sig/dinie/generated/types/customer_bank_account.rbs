@@ -1,0 +1,26 @@
+# `CustomerBankAccount` + the `CustomerBankAccountKind` enum module (architecture §3.3, §6).
+# Mirrors `lib/dinie/generated/types/customer_bank_account.rb`.
+
+module Dinie
+  module CustomerBankAccountKind
+    CHECKING: String
+    SAVING: String
+    PAYMENT: String
+    ALL: Array[String]
+  end
+
+  class CustomerBankAccount < Internal::Model
+    attr_reader bank_id: String
+    attr_reader bank_name: String
+    attr_reader branch: String
+    attr_reader digit: String
+    attr_reader id: bank_account_id
+    attr_reader kind: customer_bank_account_kind
+    attr_reader number: String
+    attr_reader updated_at: Integer
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerBankAccount
+
+    def self.serialize_upsert: (bank_id: String, branch: String, digit: String, kind: String, number: String) -> Hash[Symbol, untyped]
+  end
+end

@@ -1,0 +1,30 @@
+# `loan.signature_received` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/loan_signature_received.rb`. Carries a nested `signer`.
+
+module Dinie
+  module Events
+    class LoanSigner < Internal::Model
+      attr_reader cpf: String
+      attr_reader name: String
+      attr_reader signed_at: Integer
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanSigner
+    end
+
+    class LoanSignatureReceivedData < Internal::Model
+      attr_reader id: loan_id
+      attr_reader signatures_received: Integer
+      attr_reader signatures_required: Integer
+      attr_reader signer: LoanSigner
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanSignatureReceivedData
+    end
+
+    class LoanSignatureReceived < WebhookEventBase
+      attr_reader data: LoanSignatureReceivedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanSignatureReceived
+    end
+  end
+end

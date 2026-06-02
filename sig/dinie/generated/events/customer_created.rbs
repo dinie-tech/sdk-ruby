@@ -1,0 +1,27 @@
+# `customer.created` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/customer_created.rb`. `data` is a bespoke payload (NOT `Customer`).
+
+module Dinie
+  module Events
+    class CustomerCreatedData < Internal::Model
+      attr_reader cnpj: String?
+      attr_reader cpf: String
+      attr_reader email: String
+      attr_reader external_id: String?
+      attr_reader id: customer_id
+      attr_reader kyc: Array[Kyc::Requirement]
+      attr_reader name: String
+      attr_reader phone: String
+      attr_reader status: customer_status
+      attr_reader trading_name: String
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerCreatedData
+    end
+
+    class CustomerCreated < WebhookEventBase
+      attr_reader data: CustomerCreatedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerCreated
+    end
+  end
+end

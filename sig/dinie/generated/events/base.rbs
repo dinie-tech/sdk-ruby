@@ -1,0 +1,17 @@
+# `Events::WebhookEventBase` — the common envelope shared by all 15 events (architecture §3.1, §8).
+# Mirrors `lib/dinie/generated/events/base.rb`. Each member inherits the seven envelope fields and
+# pins its own `type` + narrows `data` to its `*Data` model. Never instantiated directly.
+
+module Dinie
+  module Events
+    class WebhookEventBase < Internal::Model
+      attr_reader api_version: String
+      attr_reader created_at: Integer
+      attr_reader data: untyped
+      attr_reader delivery_id: String
+      attr_reader id: event_id
+      attr_reader timestamp: Integer
+      attr_reader type: String
+    end
+  end
+end

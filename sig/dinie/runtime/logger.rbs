@@ -1,0 +1,89 @@
+# Leveled logging + PII redaction (architecture §9, RB12). Mirrors `lib/dinie/runtime/logger.rb`.
+# Runtime-internal. `Middleware::Logging` subclasses `Faraday::Middleware` (untyped — no bundled
+# RBS; the informative-gate gap, story 013 / §21.3).
+
+module Dinie
+  module Internal
+    # Pure, stateless redaction + truncation helpers. `module_function`: instance methods (so
+    # `self`-typing + internal calls resolve) plus singleton aliases for the two `RuntimeLogger`
+    # calls externally (`LogRedaction.redact_headers` / `.format_body`).
+    module LogRedaction
+      REDACTED: String
+      MAX_BODY_BYTES: Integer
+      REDACTED_HEADERS: Set[String]
+      REDACTED_BODY_FIELDS: Set[String]
+      NOT_JSON: untyped
+
+      # Replace the value of any sensitive header with the mask (case-insensitive).
+      def redact_headers: (untyped headers) -> Hash[String, untyped]
+      def self.redact_headers: (untyped headers) -> Hash[String, untyped]
+
+      # Deep-copy `value`, masking any Hash key (case-insensitive) that names a PII/secret field.
+      def redact_body: (untyped value) -> untyped
+
+      def redact_hash: (Hash[untyped, untyped] hash) -> Hash[untyped, untyped]
+
+      # Render a body for logging: redact PII, serialize to JSON, then truncate.
+      def format_body: (untyped body) -> String?
+      def self.format_body: (untyped body) -> String?
+
+      def serialize_for_log: (untyped body) -> String
+      def truncate_body: (String text) -> String
+      def clip_to_bytes: (String text, Integer max_bytes) -> String
+      def parse_json: (String text) -> untyped
+      def safe_generate: (untyped value) -> String
+    end
+
+    # Leveled logging facade with PII redaction. Constructed by `Middleware::Logging`.
+    class RuntimeLogger
+      LEVELS: Hash[Symbol, Integer]
+      ENV_VAR: String
+
+      attr_reader level: Symbol
+
+      def initialize: (?level: (Symbol | String)?, ?logger: untyped, ?env: String?) -> void
+
+      # Whether a call at `level` would emit under the configured level.
+      def enabled?: (Symbol level) -> bool
+
+      def error: (untyped message) -> void
+      def warn: (untyped message) -> void
+      def info: (untyped message) -> void
+      def debug: (untyped message) -> void
+
+      # Log an outgoing request at `debug` with redacted headers + body and the correlation triple.
+      def log_request: (method: (Symbol | String), url: String, headers: untyped, body: untyped, correlation: Hash[Symbol, untyped]) -> void
+
+      # Log an incoming response at `debug` with redacted headers + body, duration, and request id.
+      def log_response: (status: Integer, url: String, headers: untyped, body: untyped, duration_ms: Numeric, request_id: String?, correlation: Hash[Symbol, untyped]) -> void
+
+      private
+
+      def emit: (Symbol level, untyped message) -> void
+      def emit_line: (String label, Hash[Symbol, untyped] fields, untyped headers, untyped body) -> void
+      def resolve_level: (untyped level, untyped env) -> Symbol
+      def valid_level?: (untyped value) -> bool
+    end
+
+    module Middleware
+      # Faraday response middleware — the logging hook point. `Faraday::Middleware` is untyped.
+      class Logging < Faraday::Middleware
+        ORIGIN_LOG_ID_KEY: Symbol
+        RETRY_COUNT_HEADER: String
+        REQUEST_ID_HEADER: String
+
+        def initialize: (untyped app, ?level: (Symbol | String)?, ?logger: untyped) -> void
+
+        def call: (untyped request_env) -> untyped
+
+        private
+
+        def log_request: (untyped env, Hash[Symbol, untyped] correlation) -> void
+        def log_response: (untyped env, Hash[Symbol, untyped] correlation, Float started) -> void
+        def correlate: (untyped request_headers) -> Hash[Symbol, untyped]
+        def monotonic_now: () -> Float
+        def elapsed_ms: (Float started) -> Numeric
+      end
+    end
+  end
+end

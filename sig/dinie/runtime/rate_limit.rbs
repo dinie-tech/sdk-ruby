@@ -1,0 +1,46 @@
+# Rate-limit snapshot + tracker (architecture §10, RB6). Mirrors `lib/dinie/runtime/rate_limit.rb`.
+# `reset_at` is the SDK's only `Time` — every body timestamp stays an `Integer` epoch.
+
+module Dinie
+  # The rate-limit snapshot read from the most recent response's `X-RateLimit-*` headers.
+  # Surfaced as `client.rate_limit`; `nil` until a response carries valid headers.
+  class RateLimit
+    attr_reader limit: Integer
+    attr_reader remaining: Integer
+    attr_reader reset_at: Time
+
+    def initialize: (limit: Integer, remaining: Integer, reset_at: Time) -> void
+
+    def to_h: () -> Hash[Symbol, untyped]
+    alias to_hash to_h
+
+    def deconstruct_keys: (Array[Symbol]? keys) -> Hash[Symbol, untyped]
+
+    def ==: (untyped other) -> bool
+    alias eql? ==
+
+    def hash: () -> Integer
+  end
+
+  module Internal
+    # Parses the three `X-RateLimit-*` headers and holds the most recent snapshot for `HttpClient`.
+    class RateLimitTracker
+      LIMIT_HEADER: String
+      REMAINING_HEADER: String
+      RESET_HEADER: String
+      EPOCH_THRESHOLD_SECONDS: Integer
+
+      # Latest snapshot, or `nil` before any valid headers.
+      def snapshot: () -> Dinie::RateLimit?
+
+      # Fold a response's headers into the snapshot (a header-less/garbage response is a no-op).
+      def update: (untyped headers) -> void
+
+      # Parse the three headers into a `RateLimit`, or `nil` when any is absent/unparseable.
+      def self.parse: (untyped headers) -> Dinie::RateLimit?
+      def self.parse_count: (untyped raw) -> Integer?
+      def self.parse_reset: (untyped raw) -> Time?
+      def self.header_value: (untyped headers, String name) -> untyped
+    end
+  end
+end

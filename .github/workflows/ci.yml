@@ -28,8 +28,12 @@ jobs:
       - name: RSpec
         run: bundle exec rspec
 
-      # Steep is informative (non-blocking) in v1 until the RBS surface stabilises
-      # (architecture §5.2). No `sdk-generator --check` here — the generator is V0.4.
+      # Steep runs against the full RBS mirror in `sig/` (story 013). It is INFORMATIVE
+      # (non-blocking) in v1 — §21.3 decision, confirmed in story 013: the public surface + runtime
+      # type-check, and the bounded residual is Steep's static-analysis limits against idiomatic
+      # Ruby (the `**fields` splat idiom + stdlib empty-collection inference), NOT type errors. See
+      # the Steepfile header for the residual breakdown and the promotion-to-blocking path. No
+      # `sdk-generator --check` here — the generator is V0.4.
       - name: Steep (informative)
         run: bundle exec steep check
         continue-on-error: true

@@ -1,0 +1,7 @@
+# RBS mirror of the public surface (architecture §5.2, story 013). Hand-written in V0.3;
+# emitted mechanically from the IR in V0.4. Doc-only — `steep check` consumes it; the gem
+# ships it (gemspec `sig/**/*.rbs`) for consumers' own type checking. `.yardopts` excludes `sig/`.
+
+module Dinie
+  VERSION: String
+end

@@ -1,0 +1,14 @@
+# `Kyc::AttachmentResponse` — the `POST /customers/{id}/kyc-attachments` response body
+# (architecture §6.3). Mirrors `lib/dinie/generated/types/kyc/attachment.rb`. Read-only.
+
+module Dinie
+  module Kyc
+    class AttachmentResponse < Internal::Model
+      attr_reader id: String
+      attr_reader requirement: Requirement
+      attr_reader uploaded_at: Integer
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> AttachmentResponse
+    end
+  end
+end

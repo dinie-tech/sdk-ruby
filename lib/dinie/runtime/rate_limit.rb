@@ -68,8 +68,11 @@ module Dinie
     # parse `nil`, and {#update} then keeps the previous snapshot rather than clobbering a good
     # value with a header-less response (such as the token call).
     class RateLimitTracker
+      # Response header carrying the window ceiling.
       LIMIT_HEADER = "x-ratelimit-limit"
+      # Response header carrying the requests remaining in the window.
       REMAINING_HEADER = "x-ratelimit-remaining"
+      # Response header carrying the window reset time (epoch seconds or delta seconds).
       RESET_HEADER = "x-ratelimit-reset"
 
       # `X-RateLimit-Reset` values at or above this (seconds) are read as an absolute Unix

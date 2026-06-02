@@ -1,0 +1,66 @@
+# Enum literal-union aliases + the named-constant modules (architecture §3.3). The wire value
+# surfaces as a plain `String`; RBS carries the literal union (the type TS encodes natively), and
+# the frozen constant modules name the values for discoverability. Aliases are doc-only (any
+# `String` is assignable); the unions document the closed set.
+
+module Dinie
+  type customer_status = "creating" | "pending_kyc" | "under_review" | "active" | "denied"
+  type credential_status = "active" | "revoked"
+  type credit_offer_status = "available" | "accepted" | "expired"
+  type loan_status = "awaiting_signatures" | "processing" | "active" | "finished" | "cancelled" | "error"
+  type transaction_status = "pending" | "paid" | "overdue" | "partially_paid"
+  type transaction_type = "installment"
+  type webhook_endpoint_status = "active" | "disabled"
+  type customer_bank_account_kind = "checking" | "saving" | "payment"
+
+  module CustomerStatus
+    CREATING: String
+    PENDING_KYC: String
+    UNDER_REVIEW: String
+    ACTIVE: String
+    DENIED: String
+    ALL: Array[String]
+  end
+
+  module CredentialStatus
+    ACTIVE: String
+    REVOKED: String
+    ALL: Array[String]
+  end
+
+  module CreditOfferStatus
+    AVAILABLE: String
+    ACCEPTED: String
+    EXPIRED: String
+    ALL: Array[String]
+  end
+
+  module LoanStatus
+    AWAITING_SIGNATURES: String
+    PROCESSING: String
+    ACTIVE: String
+    FINISHED: String
+    CANCELLED: String
+    ERROR: String
+    ALL: Array[String]
+  end
+
+  module TransactionStatus
+    PENDING: String
+    PAID: String
+    OVERDUE: String
+    PARTIALLY_PAID: String
+    ALL: Array[String]
+  end
+
+  module TransactionType
+    INSTALLMENT: String
+    ALL: Array[String]
+  end
+
+  module WebhookEndpointStatus
+    ACTIVE: String
+    DISABLED: String
+    ALL: Array[String]
+  end
+end

@@ -1,0 +1,42 @@
+# KYC shared leaf types + the dispatch error (architecture §6.3). Mirrors
+# `lib/dinie/generated/types/kyc/common.rb`. `Dinie::Kyc` is the complexity hotspot (~41 types).
+
+module Dinie
+  module Kyc
+    type kyc_review_status = "pending" | "accepted" | "rejected"
+    type kyc_subject_type = "applicant" | "co_owner"
+
+    module ReviewStatus
+      PENDING: String
+      ACCEPTED: String
+      REJECTED: String
+      ALL: Array[String]
+    end
+
+    module SubjectType
+      APPLICANT: String
+      CO_OWNER: String
+      ALL: Array[String]
+    end
+
+    # Identifies who a person-specific requirement is about (applicant or company co-owner).
+    class Subject < Internal::Model
+      attr_reader id: String
+      attr_reader name: String
+      attr_reader subject_type: kyc_subject_type
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> Subject
+    end
+
+    # One uploaded-evidence slot (`{attachment_type, submitted_at}`).
+    class Attachment < Internal::Model
+      attr_reader attachment_type: String
+      attr_reader submitted_at: Integer?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> Attachment
+    end
+
+    # The shared error for an unknown discriminator value (never a silent `nil`).
+    def self.dispatch_error: (String union, String discriminator, untyped value) -> Dinie::Error
+  end
+end

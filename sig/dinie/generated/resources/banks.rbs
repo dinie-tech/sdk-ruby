@@ -1,0 +1,15 @@
+# `Resources::Banks` — the `client.banks` resource: the bank directory (architecture §3.2, §11).
+# Mirrors `lib/dinie/generated/resources/banks.rb`. `list` returns a FLAT `Array<Bank>` (not paginated).
+
+module Dinie
+  module Resources
+    class Banks
+      BANKS_PATH: String
+
+      def initialize: (Dinie::Internal::HttpClient http) -> void
+
+      # List the banks available for customer bank-account submission (`GET /banks`). FLAT array.
+      def list: (?request_options: request_opts) -> Array[Dinie::Bank]
+    end
+  end
+end

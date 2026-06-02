@@ -1,0 +1,25 @@
+# `Customer` — the full read model + its two request dumps (architecture §6, §3.3). THE exemplar
+# (de)serializer shape. Mirrors `lib/dinie/generated/types/customer.rb`.
+
+module Dinie
+  class Customer < Internal::Model
+    attr_reader cnpj: String?
+    attr_reader cpf: String
+    attr_reader created_at: Integer
+    attr_reader email: String
+    attr_reader external_id: String?
+    attr_reader id: customer_id
+    attr_reader kyc: Array[Kyc::Requirement]?
+    attr_reader name: String?
+    attr_reader phone: String
+    attr_reader status: customer_status
+    attr_reader trading_name: String?
+    attr_reader updated_at: Integer
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> Customer
+
+    def self.serialize_create: (email: String, phone: String, cpf: String, cnpj: String, ?name: String, ?external_id: String) -> Hash[Symbol, untyped]
+
+    def self.serialize_update: (?email: String, ?phone: String) -> Hash[Symbol, untyped]
+  end
+end

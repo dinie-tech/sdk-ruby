@@ -2,6 +2,7 @@
 --readme README.md
 --exclude sig/
 --no-private
+--hide-api private
 lib/**/*.rb
 -
 CHANGELOG.md

@@ -1,0 +1,45 @@
+# `Dinie::Client` — the SDK entry point (architecture §2 RB1, §3.2, §10). Mirrors
+# `lib/dinie/generated/client.rb`. Owns a connection pool + an OAuth2 token cache; construct once.
+
+module Dinie
+  # Per-call options accepted by every resource method: a normalized `RequestOptions` or a plain
+  # Hash (`{ timeout:, idempotency_key:, headers:, max_retries: }`). The methods default it to `{}`.
+  type request_opts = Dinie::Internal::RequestOptions | Hash[Symbol, untyped]
+
+  class Client
+    DEFAULT_TIMEOUT_SECONDS: Integer
+    DEFAULT_MAX_RETRIES: Integer
+
+    def initialize: (?client_id: String?, ?client_secret: String?, ?base_url: String?, ?timeout: Numeric, ?max_retries: Integer, ?idempotency: bool, ?log_level: Symbol, ?logger: untyped, ?adapter: Symbol?, ?token_manager: Dinie::Internal::TokenManager?, ?connection: untyped) -> void
+
+    # The customers resource.
+    def customers: () -> Dinie::Resources::Customers
+
+    # The credit-offers resource.
+    def credit_offers: () -> Dinie::Resources::CreditOffers
+
+    # The loans resource.
+    def loans: () -> Dinie::Resources::Loans
+
+    # The banks resource (flat `Array<Bank>` list).
+    def banks: () -> Dinie::Resources::Banks
+
+    # The credentials resource.
+    def credentials: () -> Dinie::Resources::Credentials
+
+    # The webhook-endpoints resource.
+    def webhook_endpoints: () -> Dinie::Resources::WebhookEndpoints
+
+    # The latest rate-limit snapshot; `nil` before the first call.
+    def rate_limit: () -> Dinie::RateLimit?
+
+    # Clone the client with merged config, sharing the same TokenManager + connection.
+    def with_options: (**untyped overrides) -> Dinie::Client
+
+    private
+
+    def build_token_manager: (String? client_id, String? client_secret) -> Dinie::Internal::TokenManager
+    def build_connection: (log_level: Symbol, logger: untyped, adapter: Symbol?) -> untyped
+    def first_present: (*untyped candidates) -> untyped
+  end
+end

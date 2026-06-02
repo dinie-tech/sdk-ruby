@@ -1,0 +1,58 @@
+# `Resources::Customers` — the largest resource (architecture §3.1, §3.2). Mirrors
+# `lib/dinie/generated/resources/customers.rb`. THE exemplar resource shape (008/010 copy it).
+
+module Dinie
+  module Resources
+    class Customers
+      def initialize: (Dinie::Internal::HttpClient http) -> void
+
+      # Register a new customer (`POST /customers`).
+      def create: (email: String, phone: String, cpf: String, cnpj: String, ?name: String, ?external_id: String, ?request_options: request_opts) -> Dinie::Customer
+
+      # List and search customers (`GET /customers`), auto-paginating by `starting_after`.
+      def list: (?limit: Integer, ?starting_after: String, ?request_options: request_opts, **untyped filters) -> Dinie::Page[Dinie::Customer]
+
+      # Retrieve the full customer object (`GET /customers/{id}`).
+      def retrieve: (String id, ?request_options: request_opts) -> Dinie::Customer
+
+      # Update mutable customer fields (`PATCH /customers/{id}`).
+      def update: (String id, ?request_options: request_opts, **untyped fields) -> Dinie::Customer
+
+      # Retrieve the customer's linked bank account (`GET /customers/{id}/bank-account`).
+      def retrieve_bank_account: (String customer_id, ?request_options: request_opts) -> Dinie::CustomerBankAccount
+
+      # Create or update the customer's disbursement bank account (`POST /customers/{id}/bank-account`).
+      def upsert_bank_account: (String customer_id, ?request_options: request_opts, **untyped fields) -> Dinie::CustomerBankAccount
+
+      # Generate a temporary biometrics-capture session (`POST /customers/{id}/biometrics`).
+      def create_biometrics_session: (String customer_id, ?request_options: request_opts) -> Dinie::BiometricsSession
+
+      # KYC review trigger (`POST /customers/{id}/kyc-review` → 202, no content).
+      def start_kyc_review: (String customer_id, ?request_options: request_opts) -> nil
+
+      # The customer credit-offers subresource (`customers.credit_offers`).
+      def credit_offers: () -> Dinie::Resources::Customers::CreditOffers
+
+      # The KYC attachments subresource (`customers.kyc_attachments`).
+      def kyc_attachments: () -> Dinie::Resources::Customers::KycAttachments
+
+      private
+
+      def paginated_query: (limit: untyped, starting_after: untyped, cursor: untyped, filters: Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+
+      # `customers.credit_offers` — list a single customer's credit offers.
+      class CreditOffers
+        def initialize: (Dinie::Internal::HttpClient http) -> void
+
+        def list: (String customer_id, ?limit: Integer, ?starting_after: String, ?request_options: request_opts, **untyped filters) -> Dinie::Page[Dinie::CreditOffer]
+      end
+
+      # `customers.kyc_attachments` — the KYC attachment-upload subresource.
+      class KycAttachments
+        def initialize: (Dinie::Internal::HttpClient http) -> void
+
+        def create: (String customer_id, ?request_options: request_opts, **untyped upload) -> Dinie::Kyc::AttachmentResponse
+      end
+    end
+  end
+end

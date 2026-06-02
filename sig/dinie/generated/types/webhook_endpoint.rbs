@@ -1,0 +1,38 @@
+# `WebhookEndpoint` family — REST management types (architecture §3.2, §3.3, §6). Mirrors
+# `lib/dinie/generated/types/webhook_endpoint.rb`. NOT the webhook runtime (that is `Events::*`).
+
+module Dinie
+  class WebhookEndpoint < Internal::Model
+    attr_reader created_at: Integer
+    attr_reader description: String
+    attr_reader events: Array[String]
+    attr_reader id: webhook_endpoint_id
+    attr_reader status: webhook_endpoint_status
+    attr_reader updated_at: Integer
+    attr_reader url: String
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> WebhookEndpoint
+
+    def self.serialize_create: (url: String, ?events: Array[String], ?description: String) -> Hash[Symbol, untyped]
+
+    def self.serialize_update: (?url: String, ?events: Array[String], ?description: String, ?status: String) -> Hash[Symbol, untyped]
+  end
+
+  # The creation-only endpoint — `WebhookEndpoint` plus `secret` (the contract's allOf).
+  class WebhookEndpointWithSecret < WebhookEndpoint
+    attr_reader secret: String
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> WebhookEndpointWithSecret
+  end
+
+  # The result of `webhook_endpoints.rotate_secret` — the new signing secret + old-secret deadline.
+  class WebhookSecretRotation < Internal::Model
+    attr_reader id: webhook_endpoint_id
+    attr_reader previous_secret_expires_at: Integer
+    attr_reader secret: String
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> WebhookSecretRotation
+
+    def self.serialize_rotate_secret: (?expire_current_in: Integer) -> Hash[Symbol, untyped]
+  end
+end

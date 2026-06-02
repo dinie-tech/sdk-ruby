@@ -1,0 +1,29 @@
+# Retry policy — pure decision + delay functions (architecture §10, RB15). Mirrors
+# `lib/dinie/runtime/retry.rb`. Runtime-internal: imported by `HttpClient`.
+
+module Dinie
+  module Internal
+    module Retry
+      RETRYABLE_STATUS: Set[Integer]
+      INITIAL_BACKOFF_SECONDS: Float
+      MAX_BACKOFF_SECONDS: Integer
+      JITTER_RATIO: Float
+      RETRYABLE_NETWORK_ERRORS: Array[untyped]
+
+      # `module_function`: declared as instance methods (so `self`-typing is the module) plus
+      # singleton aliases (so `Retry.should_retry?` resolves at the `HttpClient` call sites).
+
+      # True only for the retryable status set (`{408, 429, 500, 502, 503, 504}`).
+      def should_retry?: (Integer status) -> bool
+      def self.should_retry?: (Integer status) -> bool
+
+      # Whether a thrown transport error (no HTTP response) is worth retrying (timeout/conn failure).
+      def retryable_network_error?: (Exception error) -> bool
+      def self.retryable_network_error?: (Exception error) -> bool
+
+      # Seconds to wait before the next attempt (Retry-After wins; else backoff minus jitter).
+      def retry_delay: (Integer attempt, ?retry_after: (String | Array[String])?, ?retry_after_ms: (String | Array[String])?) -> Float
+      def self.retry_delay: (Integer attempt, ?retry_after: (String | Array[String])?, ?retry_after_ms: (String | Array[String])?) -> Float
+    end
+  end
+end

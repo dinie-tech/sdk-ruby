@@ -1,0 +1,12 @@
+# `Bank` — a bank-directory entry, read-only (architecture §3.3, §6, §11). Mirrors
+# `lib/dinie/generated/types/bank.rb`. `id` is the COMPE code string (`"001"`), not a `*_…` id.
+
+module Dinie
+  class Bank < Internal::Model
+    attr_reader display_name: String
+    attr_reader id: String
+    attr_reader name: String
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> Bank
+  end
+end

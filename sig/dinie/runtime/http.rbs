@@ -1,0 +1,59 @@
+# `HttpClient` — request-lifecycle orchestrator (architecture §10, RB15). Mirrors
+# `lib/dinie/runtime/http.rb`. Runtime-internal: constructed/called by `Dinie::Client` + resources.
+# Faraday objects (connection, response, env) are `untyped` — `faraday` ships no bundled RBS
+# (the documented informative-gate gap, story 013 / §21.3).
+
+module Dinie
+  module Internal
+    class HttpClient
+      DEFAULT_BASE_URL: String
+      DEFAULT_TIMEOUT_SECONDS: Integer
+      DEFAULT_MAX_RETRIES: Integer
+      API_VERSION: String
+      JSON_CONTENT_TYPE: String
+      AUTO_IDEMPOTENT_METHODS: Array[Symbol]
+      USER_AGENT: String
+
+      # Per-call request descriptor threaded through the retry loop (a private keyword-init Struct).
+      class PreparedRequest
+        attr_accessor http_method: Symbol
+        attr_accessor url: String
+        attr_accessor body: untyped
+        attr_accessor content_type: String?
+        attr_accessor idempotency_key: String?
+        attr_accessor max_retries: Integer
+        attr_accessor timeout: Numeric
+        attr_accessor header_overrides: Hash[String, String?]?
+
+        def self.new: (**untyped) -> PreparedRequest
+        def initialize: (**untyped) -> void
+      end
+
+      def initialize: (token_manager: untyped, ?base_url: String?, ?timeout: Numeric, ?max_retries: Integer, ?idempotency: bool, ?adapter: Symbol?, ?connection: untyped, ?sleeper: untyped) -> void
+
+      # Latest rate-limit snapshot (read by `client.rate_limit`).
+      def rate_limit: () -> Dinie::RateLimit?
+
+      # Run one logical request end-to-end and return the parsed body (resources deserialize it).
+      def request: (method: (Symbol | String), path: String, ?query: Hash[untyped, untyped]?, ?body: untyped, ?idempotent: bool?, ?request_options: (Dinie::Internal::RequestOptions | Hash[untyped, untyped] | nil)) -> untyped
+
+      private
+
+      def execute: (untyped prepared) -> untyped
+      def dispatch: (untyped prepared, Hash[String, untyped] headers) -> untyped
+      def build_headers: (untyped prepared, String token, Integer attempt) -> Hash[String, untyped]
+      def base_headers: (String token) -> Hash[String, String]
+      def apply_header_overrides: (Hash[String, untyped] headers, Hash[String, String?]? overrides) -> Hash[String, untyped]
+      def resolve_idempotency_key: (bool? idempotent, Symbol method, Dinie::Internal::RequestOptions options) -> String?
+      def serialize_body: (untyped body) -> [ untyped, String? ]
+      def parse_body: (untyped response) -> untyped
+      def build_full_url: (String path, Hash[untyped, untyped]? query) -> String
+      def encode_query: (Hash[untyped, untyped]? query) -> String
+      def header: (untyped response, String name) -> untyped
+      def build_error: (untyped response, ?force: Class?) -> Dinie::APIStatusError
+      def translate_network_error: (untyped error) -> Dinie::APIError
+      def sleep_for: (Numeric seconds) -> untyped
+      def build_connection: (Symbol? adapter) -> untyped
+    end
+  end
+end

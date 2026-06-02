@@ -1,0 +1,19 @@
+# `Resources::CreditOffers` — the `client.credit_offers` resource (architecture §3.2). Mirrors
+# `lib/dinie/generated/resources/credit_offers.rb`. No `create` (R10) — offers are minted by the Core.
+
+module Dinie
+  module Resources
+    class CreditOffers
+      def initialize: (Dinie::Internal::HttpClient http) -> void
+
+      # List credit offers (`GET /credit-offers`), auto-paginating by `starting_after`.
+      def list: (?limit: Integer, ?starting_after: String, ?request_options: request_opts, **untyped filters) -> Dinie::Page[Dinie::CreditOffer]
+
+      # Retrieve a single credit offer (`GET /credit-offers/{id}`).
+      def retrieve: (String id, ?request_options: request_opts) -> Dinie::CreditOffer
+
+      # Price an offer (`POST /credit-offers/{id}/simulations`).
+      def create_simulation: (String credit_offer_id, ?request_options: request_opts, **untyped fields) -> Dinie::Simulation
+    end
+  end
+end

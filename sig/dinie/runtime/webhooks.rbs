@@ -1,0 +1,31 @@
+# `Dinie::Webhooks.extract` — webhook verification + per-type deserialization (RB11, §8).
+# Mirrors `lib/dinie/runtime/webhooks.rb`. `module_function`: methods are declared as instance
+# methods (Steep types `self` as the module inside them) and are also callable on the module
+# (`Dinie::Webhooks.extract`). Verification needs no client.
+
+module Dinie
+  module Webhooks
+    DEFAULT_TOLERANCE_SECONDS: Integer
+    WHSEC_PREFIX: String
+    SIGNATURE_VERSION: String
+
+    # Verify a Standard Webhooks v1 payload and return the deserialized, typed event. Never returns
+    # an unverified event.
+    def extract: (headers: Hash[untyped, untyped], body: String, secret: (String | Array[String]), ?tolerance_seconds: Integer) -> Dinie::Events::WebhookEventBase
+
+    def signed_payload: (untyped webhook_id, untyped timestamp, String body) -> String
+    def required_header: (Hash[untyped, untyped] headers, String name, untyped error_class) -> untyped
+    def lookup_header: (Hash[untyped, untyped] headers, String name) -> untyped
+    def fetch_header: (Hash[untyped, untyped] headers, String name) -> untyped
+    def verify_timestamp!: (untyped timestamp, Integer tolerance_seconds) -> void
+    def verify_signature!: (String payload, (String | Array[String]) secret, String signature_header) -> void
+    def normalize_secrets: ((String | Array[String]) secret) -> Array[untyped]
+    def parse_signature_header: (String header) -> Array[untyped]
+    def signatures_match?: (String payload, Array[untyped] secrets, Array[untyped] provided_signatures) -> bool
+    def decode_secret: (String secret) -> untyped
+    def deserialize_verified_event: (String body) -> Dinie::Events::WebhookEventBase
+
+    # Module-function aliases (callable as `Dinie::Webhooks.extract`).
+    def self.extract: (headers: Hash[untyped, untyped], body: String, secret: (String | Array[String]), ?tolerance_seconds: Integer) -> Dinie::Events::WebhookEventBase
+  end
+end

@@ -1,0 +1,9 @@
+# `Events::DESERIALIZERS` — the per-type webhook dispatch table (architecture §4.1, RB14). Mirrors
+# `lib/dinie/generated/events/deserializers.rb`. 15 entries from 11 schemas; consumed by
+# `runtime/webhooks.rb` via the controlled inverse import.
+
+module Dinie
+  module Events
+    DESERIALIZERS: Hash[String, ^(Hash[Symbol, untyped]) -> WebhookEventBase]
+  end
+end

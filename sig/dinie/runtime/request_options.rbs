@@ -1,0 +1,35 @@
+# Normalized per-call options, the trailing `request_options:` Hash (architecture §12, RB5).
+# Mirrors `lib/dinie/runtime/request_options.rb`.
+
+module Dinie
+  module Internal
+    class RequestOptions
+      attr_reader timeout: Numeric?
+      attr_reader idempotency_key: String?
+      attr_reader headers: Hash[String, String?]?
+      attr_reader max_retries: Integer?
+
+      # Pass a `RequestOptions` through, or build one from a Hash (string/symbol keys; `nil` → empty).
+      # Param is `untyped`: the body branches on `value.is_a?(self)`, which Steep cannot narrow on a
+      # union, so a precise union would mis-type the Hash branch.
+      def self.coerce: (untyped value) -> RequestOptions
+
+      def initialize: (?timeout: Numeric?, ?idempotency_key: String?, ?headers: Hash[untyped, untyped]?, ?max_retries: Integer?) -> void
+
+      def to_h: () -> Hash[Symbol, untyped]
+      alias to_hash to_h
+
+      def ==: (untyped other) -> bool
+      alias eql? ==
+
+      def hash: () -> Integer
+
+      private
+
+      def validate_timeout: (untyped value) -> Numeric?
+      def validate_max_retries: (untyped value) -> Integer?
+      def validate_string: (untyped value, Symbol key) -> String?
+      def validate_headers: (untyped value) -> Hash[String, String?]?
+    end
+  end
+end

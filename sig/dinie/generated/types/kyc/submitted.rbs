@@ -1,0 +1,21 @@
+# KYC submitted-evidence family (DS-FAMILY — one model for all ten variants) + the implicit
+# identity CNH|RG dispatch (DS-IMPLICIT). Mirrors `lib/dinie/generated/types/kyc/submitted.rb`.
+
+module Dinie
+  module Kyc
+    class Submitted < Internal::Model
+      attr_reader attachments: Array[Attachment]
+      attr_reader evidence_type: String
+      attr_reader review_reason: String?
+      attr_reader review_status: kyc_review_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> Submitted
+    end
+
+    # Hydrate any non-identity `*Submitted` (the uniform DS-FAMILY path).
+    def self.deserialize_submitted: (Hash[Symbol, untyped] raw) -> Submitted
+
+    # Hydrate the identity `submitted` oneOf by dispatching on the const `evidence_type`.
+    def self.deserialize_identity_submitted: (Hash[Symbol, untyped] raw) -> Submitted
+  end
+end

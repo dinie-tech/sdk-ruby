@@ -1,0 +1,43 @@
+# `TokenManager` — OAuth2 client_credentials token cache (architecture §10). Mirrors
+# `lib/dinie/runtime/token_manager.rb`. Runtime-internal: built/injected by `Dinie::Client`.
+# Faraday objects are `untyped` (no bundled RBS — informative-gate gap).
+
+module Dinie
+  module Internal
+    class TokenManager
+      TOKEN_PATH: String
+      REFRESH_MARGIN_SECONDS: Integer
+      GRANT_BODY: String
+      FORM_CONTENT_TYPE: String
+      MISSING_ACCESS_TOKEN: String
+      MISSING_EXPIRES_IN: String
+
+      def initialize: (client_id: String, client_secret: String, ?base_url: String?, ?connection: untyped, ?refresh_margin_seconds: Integer, ?adapter: Symbol?, ?clock: untyped) -> void
+
+      # Return a valid Bearer access token, acquiring or refreshing transparently.
+      def access_token: () -> String
+
+      # Drop the cached token so the next `access_token` re-authenticates (the 401 one-shot seam).
+      def invalidate!: () -> void
+
+      private
+
+      def token_valid?: () -> bool
+      def refresh_and_cache: () -> String
+      def fetch_token: () -> [ String, Numeric ]
+      def request_token: () -> untyped
+      def parse_token_response: (untyped raw_body) -> [ String, Numeric ]
+      def parse_json: (untyped raw_body) -> untyped
+      def valid_access_token?: (untyped value) -> bool
+      def valid_expires_in?: (untyped value) -> bool
+      def token_request_headers: () -> Hash[String, String]
+      def basic_credentials: () -> String
+      def token_url: () -> String
+      def success?: (Integer status) -> bool
+      def body_detail: (untyped response) -> String
+      def status_failure: (Integer status, String detail) -> String
+      def now: () -> Numeric
+      def build_connection: (Symbol? adapter) -> untyped
+    end
+  end
+end

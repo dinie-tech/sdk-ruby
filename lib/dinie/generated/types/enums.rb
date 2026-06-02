@@ -31,7 +31,9 @@ module Dinie
 
   # Credential lifecycle status — `components.schemas.Credential.status`.
   module CredentialStatus
+    # Credencial ativa e utilizável.
     ACTIVE = "active"
+    # Credencial revogada permanentemente.
     REVOKED = "revoked"
     # Every valid value, in contract order.
     ALL = [ACTIVE, REVOKED].freeze

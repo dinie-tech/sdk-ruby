@@ -1,0 +1,40 @@
+# Server-response error catalog + dispatch table (RB14, architecture §4.1, §7). Mirrors
+# `lib/dinie/generated/errors/registry.rb`. Each marker is an empty subclass of `APIStatusError`.
+
+module Dinie
+  # 400 — `invalid-request`.
+  class BadRequestError < APIStatusError
+  end
+
+  # 401 — `authentication-failed`.
+  class AuthError < APIStatusError
+  end
+
+  # 403 — `forbidden` type URL orphan (P1 debt); dispatches by status.
+  class PermissionError < APIStatusError
+  end
+
+  # 404 — `not-found`.
+  class NotFoundError < APIStatusError
+  end
+
+  # 409 — `conflict`.
+  class ConflictError < APIStatusError
+  end
+
+  # 422 — `validation-failed`.
+  class ValidationError < APIStatusError
+  end
+
+  # 429 — `rate-limit-exceeded`.
+  class RateLimitError < APIStatusError
+  end
+
+  # 500 (also 503) and the ≥500 band fallback — `internal`.
+  class ServerError < APIStatusError
+  end
+
+  module Internal
+    ERROR_REGISTRY: Hash[Symbol, untyped]
+  end
+end

@@ -1,0 +1,25 @@
+# `customer.denied` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/customer_denied.rb`.
+
+module Dinie
+  module Events
+    class CustomerDeniedData < Internal::Model
+      attr_reader cnpj: String?
+      attr_reader cpf: String
+      attr_reader email: String
+      attr_reader external_id: String?
+      attr_reader id: customer_id
+      attr_reader name: String
+      attr_reader phone: String
+      attr_reader status: String
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerDeniedData
+    end
+
+    class CustomerDenied < WebhookEventBase
+      attr_reader data: CustomerDeniedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CustomerDenied
+    end
+  end
+end

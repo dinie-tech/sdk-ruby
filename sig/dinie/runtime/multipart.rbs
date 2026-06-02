@@ -1,0 +1,25 @@
+# Transport wrapper for a `multipart/form-data` request body (architecture §10/§14).
+# Mirrors `lib/dinie/runtime/multipart.rb`. Runtime-internal (the KYC upload seam).
+
+module Dinie
+  module Internal
+    class Multipart
+      CONTENT_TYPE: String
+      DEFAULT_FILE_CONTENT_TYPE: String
+      DEFAULT_FILE_FILENAME: String
+
+      attr_reader fields: Hash[Symbol, String]
+      attr_reader file: untyped
+
+      def initialize: (fields: Hash[Symbol, String], ?file: untyped) -> void
+
+      # The Faraday multipart body: scalar fields plus the wrapped `file` part when present.
+      def to_faraday_body: () -> Hash[Symbol, untyped]
+
+      private
+
+      def wrap_file: (untyped file) -> untyped
+      def multipart_part?: (untyped file) -> bool
+    end
+  end
+end

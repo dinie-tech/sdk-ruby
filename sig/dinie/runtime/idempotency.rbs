@@ -1,0 +1,15 @@
+# Idempotency-Key generation (architecture §10, RB15). Mirrors `lib/dinie/runtime/idempotency.rb`.
+# Runtime-internal: consumed by `HttpClient`, not part of the public surface.
+
+module Dinie
+  module Internal
+    module Idempotency
+      KEY_PREFIX: String
+
+      # `module_function`: instance method + singleton alias (called as `Idempotency.generate_key`).
+      # A fresh auto-generated Idempotency-Key: `dinie-sdk-retry-<uuid v4>`.
+      def generate_key: () -> String
+      def self.generate_key: () -> String
+    end
+  end
+end

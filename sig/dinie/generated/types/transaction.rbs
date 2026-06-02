@@ -1,0 +1,24 @@
+# `Transaction` — one installment of a loan (`tx_…`), read-only (architecture §3.3, §6).
+# Mirrors `lib/dinie/generated/types/transaction.rb`.
+
+module Dinie
+  class Transaction < Internal::Model
+    attr_reader amount_due: money
+    attr_reader amount_paid: money
+    attr_reader amount_remaining: money
+    attr_reader created_at: Integer
+    attr_reader days_overdue: Integer
+    attr_reader due_date: String
+    attr_reader fees: money
+    attr_reader id: transaction_id
+    attr_reader interest: money
+    attr_reader loan_id: loan_id
+    attr_reader paid_at: Integer?
+    attr_reader principal: money
+    attr_reader status: transaction_status
+    attr_reader type: transaction_type
+    attr_reader updated_at: Integer
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> Transaction
+  end
+end

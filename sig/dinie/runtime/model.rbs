@@ -1,0 +1,51 @@
+# Runtime model base + the `OMIT` sentinel (architecture §5.1, §6.2). Mirrors
+# `lib/dinie/runtime/model.rb`.
+
+module Dinie
+  module Internal
+    # The "argument not provided" sentinel (RB5). Compared by identity; exactly one frozen
+    # instance. Optional kwargs default to it and serializers drop any key still equal to it.
+    OMIT: Object
+
+    # Identity check for the OMIT sentinel.
+    def self.omitted?: (untyped value) -> bool
+
+    # Base class for every generated model: value-semantics POROs without `Data.define`
+    # (Ruby 3.1 floor). Subclasses declare fields with `attribute` (alphabetical, R-ORDER).
+    class Model
+      REDACTED_ATTRIBUTES: Array[Symbol]
+
+      # The declared attribute names, in declaration (R-ORDER) order.
+      def self.attributes: () -> Array[Symbol]
+
+      # Declare one or more attributes (defines an `attr_reader` for each; appends to `attributes`).
+      def self.attribute: (*Symbol | String names) -> void
+
+      # Carry the parent's attribute list into each subclass.
+      def self.inherited: (Class subclass) -> void
+
+      # Build a frozen instance from keyword arguments — one per declared attribute.
+      def initialize: (**untyped attrs) -> void
+
+      # Attributes in declaration (R-ORDER) order — deterministic.
+      def to_h: () -> Hash[Symbol, untyped]
+      alias to_hash to_h
+
+      # Enable pattern matching (`case model; in {status: "active"}`).
+      def deconstruct_keys: (Array[Symbol]? keys) -> Hash[Symbol, untyped]
+
+      # Value-equality: same class and same attribute values.
+      def ==: (untyped other) -> bool
+      alias eql? ==
+
+      def hash: () -> Integer
+
+      # Like `to_h`, but with PII redacted — safe for logs and the console.
+      def inspect: () -> String
+
+      private
+
+      def validate_keys!: (Array[Symbol] expected, Hash[Symbol, untyped] attrs) -> void
+    end
+  end
+end

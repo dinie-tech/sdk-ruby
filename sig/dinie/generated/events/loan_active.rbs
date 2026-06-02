@@ -1,0 +1,20 @@
+# `loan.active` event (architecture §3.1, §8). Mirrors `lib/dinie/generated/events/loan_active.rb`.
+
+module Dinie
+  module Events
+    class LoanActiveData < Internal::Model
+      attr_reader id: loan_id
+      attr_reader principal_amount: money
+      attr_reader requested_amount: money
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanActiveData
+    end
+
+    class LoanActive < WebhookEventBase
+      attr_reader data: LoanActiveData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanActive
+    end
+  end
+end

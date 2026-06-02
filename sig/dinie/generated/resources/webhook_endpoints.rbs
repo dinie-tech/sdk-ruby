@@ -1,0 +1,35 @@
+# `Resources::WebhookEndpoints` — the `client.webhook_endpoints` resource: REST management of
+# webhook endpoints (architecture §3.2). Mirrors `lib/dinie/generated/resources/webhook_endpoints.rb`.
+# Distinct from event reception (`Dinie::Webhooks.extract`).
+
+module Dinie
+  module Resources
+    class WebhookEndpoints
+      WEBHOOK_ENDPOINTS_PATH: String
+
+      def initialize: (Dinie::Internal::HttpClient http) -> void
+
+      # Create a webhook endpoint (`POST /webhooks/endpoints`) → the secret-bearing response.
+      def create: (?request_options: request_opts, **untyped fields) -> Dinie::WebhookEndpointWithSecret
+
+      # List webhook endpoints (`GET /webhooks/endpoints`), auto-paginating by `starting_after`.
+      def list: (?limit: Integer, ?starting_after: String, ?request_options: request_opts) -> Dinie::Page[Dinie::WebhookEndpoint]
+
+      # Retrieve a webhook endpoint by id (`GET /webhooks/endpoints/{id}`).
+      def retrieve: (String id, ?request_options: request_opts) -> Dinie::WebhookEndpoint
+
+      # Update a webhook endpoint (`PATCH /webhooks/endpoints/{id}`).
+      def update: (String id, ?request_options: request_opts, **untyped fields) -> Dinie::WebhookEndpoint
+
+      # Delete a webhook endpoint (`DELETE /webhooks/endpoints/{id}` → 204).
+      def delete: (String id, ?request_options: request_opts) -> nil
+
+      # Rotate the HMAC signing secret (`POST /webhooks/endpoints/{id}/rotate-secret`).
+      def rotate_secret: (String id, ?expire_current_in: Integer, ?request_options: request_opts) -> Dinie::WebhookSecretRotation
+
+      private
+
+      def endpoint_path: (String id) -> String
+    end
+  end
+end

@@ -1,0 +1,40 @@
+# `loan.finished` + `loan.cancelled` + `loan.error` events — one schema, three classes (architecture
+# §3.1, §8). Mirrors `lib/dinie/generated/events/loan_status.rb`. The nested `error` object is named
+# `LoanErrorDetails` to avoid colliding with the `LoanError` event class.
+
+module Dinie
+  module Events
+    class LoanErrorDetails < Internal::Model
+      attr_reader code: String
+      attr_reader message: String
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanErrorDetails
+    end
+
+    class LoanStatusData < Internal::Model
+      attr_reader error: LoanErrorDetails?
+      attr_reader id: loan_id
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanStatusData
+    end
+
+    class LoanFinished < WebhookEventBase
+      attr_reader data: LoanStatusData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanFinished
+    end
+
+    class LoanCancelled < WebhookEventBase
+      attr_reader data: LoanStatusData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanCancelled
+    end
+
+    class LoanError < WebhookEventBase
+      attr_reader data: LoanStatusData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanError
+    end
+  end
+end

@@ -1,0 +1,28 @@
+# `Simulation` + its `CreateSimulationRequest` dump — credit-offer pricing (`sim_…`)
+# (architecture §3.3, §6). Mirrors `lib/dinie/generated/types/simulation.rb`. Read model AND
+# request body; every field required (no optional members).
+
+module Dinie
+  class Simulation < Internal::Model
+    attr_reader annual_cet_rate: Float
+    attr_reader annual_interest_rate: Float
+    attr_reader created_at: Integer
+    attr_reader credit_offer_id: credit_offer_id
+    attr_reader fee_amount: money
+    attr_reader first_due_date: String
+    attr_reader id: simulation_id
+    attr_reader installment_amount: money
+    attr_reader installment_count: Integer
+    attr_reader interest_amount: money
+    attr_reader iof_amount: money
+    attr_reader monthly_cet_rate: Float
+    attr_reader monthly_interest_rate: Float
+    attr_reader principal_amount: money
+    attr_reader requested_amount: money
+    attr_reader total_amount: money
+
+    def self.deserialize: (Hash[Symbol, untyped] raw) -> Simulation
+
+    def self.serialize_create: (installment_count: Integer, requested_amount: Float) -> Hash[Symbol, untyped]
+  end
+end

@@ -1,0 +1,117 @@
+# KYC requirement types + the `KycRequirement` discriminated union (DS-DISCRIMINATED — the
+# headline rule). Mirrors `lib/dinie/generated/types/kyc/requirements.rb`. Base + nine subclasses;
+# partners discriminate by CLASS (`case requirement; when Dinie::Kyc::IdentityRequirement`).
+
+module Dinie
+  module Kyc
+    # Abstract base for the nine requirement variants. Declares no attributes; never instantiated.
+    class Requirement < Internal::Model
+    end
+
+    # Identity-document requirement (CNH or RG). Person-specific (carries a `Subject`).
+    class IdentityRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader subject: Subject
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> IdentityRequirement
+    end
+
+    # Selfie requirement. Person-specific.
+    class SelfieRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader subject: Subject
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> SelfieRequirement
+    end
+
+    # Proof-of-address requirement. Person-specific.
+    class ProofOfAddressRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader subject: Subject
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> ProofOfAddressRequirement
+    end
+
+    # Company-document (CCMEI) requirement. Company-wide — no subject.
+    class CompanyDocumentRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> CompanyDocumentRequirement
+    end
+
+    # EI/MEI documents requirement. Company-wide.
+    class EiMeiDocumentsRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> EiMeiDocumentsRequirement
+    end
+
+    # Income-statement (DRE) requirement. Company-wide.
+    class IncomeStatementRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> IncomeStatementRequirement
+    end
+
+    # Articles-of-association (contrato social) requirement. Company-wide.
+    class ArticlesOfAssociationRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> ArticlesOfAssociationRequirement
+    end
+
+    # EIRELI incorporation-statement requirement. Company-wide.
+    class EireliIncorporationStatementRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> EireliIncorporationStatementRequirement
+    end
+
+    # Co-owner email-collection requirement (for CCB digital signature). Person-specific.
+    class EmailRequirement < Requirement
+      attr_reader label: String
+      attr_reader mandatory: bool
+      attr_reader requirement_id: String
+      attr_reader requirement_type: String
+      attr_reader subject: Subject
+      attr_reader submitted: Submitted?
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> EmailRequirement
+    end
+
+    # Hydrate any wire requirement by dispatching on the explicit `requirement_type` discriminator.
+    def self.deserialize_requirement: (Hash[Symbol, untyped] raw) -> Requirement
+  end
+end

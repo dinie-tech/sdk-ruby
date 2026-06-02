@@ -1,0 +1,21 @@
+# Resource ID aliases (architecture §3.3). Ruby has no zero-cost nominal typing, so each prefixed
+# id is a plain `String`; the prefix/pattern lives in the contract + the conformance harness, and
+# here as a doc-only RBS alias (the `comparison.md` "nominal typing available" axis). `ID_PATTERNS`
+# is `Internal::` (not the frozen surface).
+
+module Dinie
+  # Doc-only id aliases (each resolves to `String`). The prefix is documented; not enforced by type.
+  type api_client_id = String         # `dinie_ci_…`
+  type bank_account_id = String       # `ba_…`
+  type credit_offer_id = String       # `co_…`
+  type customer_id = String           # `cust_…` (NOT `cus_`)
+  type event_id = String              # `evt_…`
+  type loan_id = String               # `ln_…`
+  type simulation_id = String         # `sim_…`
+  type transaction_id = String        # `tx_…`
+  type webhook_endpoint_id = String   # `we_…`
+
+  module Internal
+    ID_PATTERNS: Hash[Symbol, Regexp]
+  end
+end

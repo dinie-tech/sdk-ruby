@@ -1,0 +1,28 @@
+# `loan.payment_received` event (architecture §3.1, §8). Mirrors
+# `lib/dinie/generated/events/loan_payment_received.rb`. Carries a nested `payment`.
+
+module Dinie
+  module Events
+    class LoanPayment < Internal::Model
+      attr_reader amount: money
+      attr_reader installment_number: Integer
+      attr_reader paid_at: Integer
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanPayment
+    end
+
+    class LoanPaymentReceivedData < Internal::Model
+      attr_reader id: loan_id
+      attr_reader payment: LoanPayment
+      attr_reader status: loan_status
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanPaymentReceivedData
+    end
+
+    class LoanPaymentReceived < WebhookEventBase
+      attr_reader data: LoanPaymentReceivedData
+
+      def self.deserialize: (Hash[Symbol, untyped] raw) -> LoanPaymentReceived
+    end
+  end
+end
