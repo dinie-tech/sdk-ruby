@@ -1,0 +1,40 @@
+# frozen_string_literal: true
+
+require_relative "lib/dinie/version"
+
+Gem::Specification.new do |spec|
+  spec.name = "dinie"
+  spec.version = Dinie::VERSION
+  spec.authors = ["Dinie"]
+  spec.email = ["engineering@dinie.com.br"]
+
+  spec.summary = "Official Ruby SDK for the Dinie V3 API (backend-only)."
+  spec.description = "Hand-written Ruby SDK for the Dinie V3 API: OAuth2 client-credentials auth, " \
+                     "automatic retries, cursor pagination, typed errors, and webhook verification."
+  spec.homepage = "https://dinie.com.br"
+  spec.license = "MIT"
+  spec.required_ruby_version = ">= 3.1"
+
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = "https://github.com/dinie-tech/sdk-ruby"
+  spec.metadata["changelog_uri"] = "https://github.com/dinie-tech/sdk-ruby/blob/main/CHANGELOG.md"
+  spec.metadata["rubygems_mfa_required"] = "true"
+  # Private gem — not published to RubyGems.org. RubyGems publishing is V1.0; there is
+  # deliberately no `allowed_push_host` / `gem push` wired here (architecture §1, §19).
+
+  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("sig/**/*.rbs") + %w[README.md LICENSE CHANGELOG.md]
+  spec.require_paths = ["lib"]
+
+  # Runtime dependencies (ubiquitous; architecture §19).
+  spec.add_dependency "faraday", "~> 2.0"
+  spec.add_dependency "net-http-persistent", "~> 4.0"
+
+  # Development dependencies (declared here; see `.rubocop.yml` Gemspec/DevelopmentDependencies).
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rbs", "~> 3.4"
+  spec.add_development_dependency "rspec", "~> 3.13"
+  spec.add_development_dependency "rubocop", "~> 1.60"
+  spec.add_development_dependency "steep", "~> 1.6"
+  spec.add_development_dependency "webmock", "~> 3.19"
+  spec.add_development_dependency "yard", "~> 0.9"
+end

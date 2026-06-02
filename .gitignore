@@ -1,0 +1,24 @@
+# Bundler / gems
+/.bundle/
+/vendor/bundle/
+/pkg/
+*.gem
+Gemfile.lock
+
+# Test / coverage
+/coverage/
+
+# YARD / docs
+/.yardoc/
+/doc/
+
+# Steep / type cache
+/.steep/
+
+# Environment (smoke E2E credentials, etc.)
+.env
+.env.local
+
+# Editor / OS
+.DS_Store
+*.log
