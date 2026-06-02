@@ -115,6 +115,31 @@ module Dinie
       @loans ||= Resources::Loans.new(@http)
     end
 
+    # The banks resource — the bank directory (architecture §3.2, §11, story 010). `banks.list`
+    # returns a flat `Array<Bank>` (not paginated). Memoized over the shared `@http`.
+    #
+    # @return [Dinie::Resources::Banks]
+    def banks
+      @banks ||= Resources::Banks.new(@http)
+    end
+
+    # The credentials resource — API-key management (`dinie_ci_…`) (architecture §3.2, story 010).
+    # Memoized over the shared `@http`.
+    #
+    # @return [Dinie::Resources::Credentials]
+    def credentials
+      @credentials ||= Resources::Credentials.new(@http)
+    end
+
+    # The webhook-endpoints resource — REST management of webhook endpoints (`we_…`) (architecture
+    # §3.2, story 010). DISTINCT from event reception (`Dinie::Webhooks.extract`, story 011).
+    # Memoized over the shared `@http`.
+    #
+    # @return [Dinie::Resources::WebhookEndpoints]
+    def webhook_endpoints
+      @webhook_endpoints ||= Resources::WebhookEndpoints.new(@http)
+    end
+
     private
 
     # Build the real, concurrency-safe token manager (story 004) on the shared connection, raising

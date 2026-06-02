@@ -10,8 +10,8 @@
 # the values. `ALL` lists every value in contract order, for iteration and conformance use.
 #
 # Scope: the foundational enums (Customer, Credential, CreditOffer) PLUS the credit-flow enums
-# (Loan/Transaction) added by story 008. Remaining resource-specific enums land with their
-# resources (010).
+# (Loan/Transaction) added by story 008 PLUS the platform enums (WebhookEndpoint) added by
+# story 010.
 module Dinie
   # Customer lifecycle status — `components.schemas.Customer.status` (openapi @ 3fcfd83).
   module CustomerStatus
@@ -89,5 +89,15 @@ module Dinie
     INSTALLMENT = "installment"
     # Every valid value, in contract order.
     ALL = [INSTALLMENT].freeze
+  end
+
+  # Webhook-endpoint status — `components.schemas.WebhookEndpoint.status` (story 010).
+  module WebhookEndpointStatus
+    # Endpoint ativo, recebendo eventos.
+    ACTIVE = "active"
+    # Endpoint desativado, sem entregas.
+    DISABLED = "disabled"
+    # Every valid value, in contract order.
+    ALL = [ACTIVE, DISABLED].freeze
   end
 end
