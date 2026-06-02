@@ -112,20 +112,17 @@ module Dinie
     # Build the ONE shared `Faraday::Connection` for this client. The HttpClient and the
     # TokenManager both ride it, so they share a single connection pool (architecture §10).
     #
-    # ┌── STORY 005 SEAM ───────────────────────────────────────────────────────────────────────┐
-    # │ Mount the logging middleware HERE, inside this block, BEFORE the adapter, so it observes  │
-    # │ the FINAL request/response of EVERY call — including the TokenManager's POST /auth/token,  │
-    # │ whose `Authorization: Basic` header carries the client secret and MUST be redacted. Use   │
-    # │ the `log_level:` / `logger:` captured by this method:                                     │
-    # │                                                                                           │
-    # │   faraday.use Dinie::Internal::Middleware::Logging, level: log_level, logger: logger      │
-    # │                                                                                           │
-    # │ Until story 005 lands, the connection is plain (logging disabled). Do NOT mount logging   │
-    # │ inside HttpClient#build_connection — that builder is the standalone fallback the composed  │
-    # │ client never uses; this shared connection is the one every request actually rides.        │
-    # └───────────────────────────────────────────────────────────────────────────────────────┘
-    def build_connection(log_level:, logger:, adapter:) # rubocop:disable Lint/UnusedMethodArgument
+    # The logging middleware (story 005) is mounted HERE, inside this block, BEFORE the adapter, so
+    # it observes the FINAL request/response of EVERY call — including the TokenManager's
+    # `POST /auth/token`, whose `Authorization: Basic` header carries the client secret and is
+    # redacted by the middleware. It reads the `log_level:` / `logger:` captured by this method.
+    #
+    # The middleware is NOT mounted in {Internal::HttpClient#build_connection}: that builder is the
+    # standalone fallback the composed client never uses; THIS shared connection is the one every
+    # request (resource calls AND the token POST) actually rides.
+    def build_connection(log_level:, logger:, adapter:)
       Faraday.new(url: @base_url) do |faraday|
+        faraday.use Internal::Middleware::Logging, level: log_level, logger: logger
         faraday.adapter(adapter || :net_http_persistent)
       end
     end
