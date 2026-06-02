@@ -9,3 +9,5 @@
 # 010 banks/credentials/webhook_endpoints.
 
 require_relative "resources/customers"
+require_relative "resources/credit_offers"
+require_relative "resources/loans"

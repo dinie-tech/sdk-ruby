@@ -9,8 +9,9 @@
 # constants carry the values). The constants do NOT impose validation; they document and name
 # the values. `ALL` lists every value in contract order, for iteration and conformance use.
 #
-# Scope: the three enums of the foundational types (Customer, Credential, CreditOffer).
-# Resource-specific enums (loan/transaction/… status) land with their resources (007–010).
+# Scope: the foundational enums (Customer, Credential, CreditOffer) PLUS the credit-flow enums
+# (Loan/Transaction) added by story 008. Remaining resource-specific enums land with their
+# resources (010).
 module Dinie
   # Customer lifecycle status — `components.schemas.Customer.status` (openapi @ 3fcfd83).
   module CustomerStatus
@@ -46,5 +47,47 @@ module Dinie
     EXPIRED = "expired"
     # Every valid value, in contract order.
     ALL = [AVAILABLE, ACCEPTED, EXPIRED].freeze
+  end
+
+  # Loan lifecycle status — `components.schemas.Loan.status` (story 008).
+  module LoanStatus
+    # Aguardando assinaturas da CCB.
+    AWAITING_SIGNATURES = "awaiting_signatures"
+    # Assinaturas coletadas, desembolso em andamento.
+    PROCESSING = "processing"
+    # Empréstimo ativo com parcelas em aberto.
+    ACTIVE = "active"
+    # Todas as parcelas pagas.
+    FINISHED = "finished"
+    # Empréstimo cancelado antes do desembolso.
+    CANCELLED = "cancelled"
+    # Erro durante o processamento do empréstimo.
+    ERROR = "error"
+    # Every valid value, in contract order.
+    ALL = [AWAITING_SIGNATURES, PROCESSING, ACTIVE, FINISHED, CANCELLED, ERROR].freeze
+  end
+
+  # Transaction (installment) status — `components.schemas.Transaction.status` (story 008).
+  module TransactionStatus
+    # Parcela aguardando pagamento.
+    PENDING = "pending"
+    # Parcela paga integralmente.
+    PAID = "paid"
+    # Parcela vencida.
+    OVERDUE = "overdue"
+    # Parcela com pagamento parcial.
+    PARTIALLY_PAID = "partially_paid"
+    # Every valid value, in contract order.
+    ALL = [PENDING, PAID, OVERDUE, PARTIALLY_PAID].freeze
+  end
+
+  # Transaction type — `components.schemas.Transaction.type` (story 008). A single-member `const`
+  # in the contract today (`installment`); modelled as a one-value catalog for parity with the
+  # other enums and forward-compatibility.
+  module TransactionType
+    # Parcela de um empréstimo.
+    INSTALLMENT = "installment"
+    # Every valid value, in contract order.
+    ALL = [INSTALLMENT].freeze
   end
 end

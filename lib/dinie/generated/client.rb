@@ -99,6 +99,22 @@ module Dinie
       )
     end
 
+    # The credit-offers resource — offers and simulations (architecture §3.2, story 008). Memoized
+    # over the shared `@http`.
+    #
+    # @return [Dinie::Resources::CreditOffers]
+    def credit_offers
+      @credit_offers ||= Resources::CreditOffers.new(@http)
+    end
+
+    # The loans resource — loans and their transactions (architecture §3.2, story 008). Memoized
+    # over the shared `@http`.
+    #
+    # @return [Dinie::Resources::Loans]
+    def loans
+      @loans ||= Resources::Loans.new(@http)
+    end
+
     private
 
     # Build the real, concurrency-safe token manager (story 004) on the shared connection, raising
