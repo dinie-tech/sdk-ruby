@@ -306,11 +306,12 @@ module Dinie
         @sleeper.call(seconds)
       end
 
-      # Build the per-client Faraday connection. The logger middleware (story 005) mounts in this
-      # block, before the adapter, so it observes the final request/response.
+      # Standalone fallback connection, used only when no `connection:` is injected (tests, direct
+      # use). The composed SDK always injects the SHARED connection built by {Dinie::Client}, which
+      # is where the story 005 logging middleware mounts (so it also observes the TokenManager's
+      # token POST). This builder is intentionally plain — do NOT mount logging here.
       def build_connection(adapter)
         Faraday.new(url: @base_url) do |faraday|
-          # Logger middleware seam (story 005): `Dinie::Internal::Middleware::Logging` here.
           faraday.adapter(adapter || :net_http_persistent)
         end
       end
