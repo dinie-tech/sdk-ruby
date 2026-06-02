@@ -27,7 +27,7 @@ require_relative "dinie/runtime/request_options"
 
 # --- generated (hand-authored V0.3 — CODEOWNER bot — stories 006–011) ----------
 require_relative "dinie/generated/errors/registry"
-# require_relative "dinie/generated/types"
+require_relative "dinie/generated/types"
 # require_relative "dinie/generated/events"
 # require_relative "dinie/generated/resources"
 # require_relative "dinie/generated/client"

@@ -24,3 +24,19 @@ Metrics/BlockLength:
     - "spec/**/*"
     - "*.gemspec"
     - "Rakefile"
+
+# The generated layer is deterministic, verbose-by-design emission: per-field (de)serializers
+# list every attribute explicitly (R-EXPLICIT, architecture §6). Method-length / ABC caps
+# fight that intent and add noise; the layer is bot-owned (CODEOWNERS) and regenerated
+# wholesale in V0.5.
+Metrics/MethodLength:
+  Exclude:
+    - "lib/dinie/generated/**/*"
+Metrics/AbcSize:
+  Exclude:
+    - "lib/dinie/generated/**/*"
+# Request serializers take one keyword argument per request-body field (RB4); the kwargs ARE
+# the API and are self-documenting at the call site, so the >5 cap does not apply here.
+Metrics/ParameterLists:
+  Exclude:
+    - "lib/dinie/generated/**/*"
