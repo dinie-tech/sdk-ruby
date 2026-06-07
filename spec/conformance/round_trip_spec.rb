@@ -110,8 +110,8 @@ module ConformanceRoundTrip # rubocop:disable Metrics/ModuleLength
     "CreditOffer" => ->(wire) { Dinie::CreditOffer.deserialize(wire) },
     "Customer" => ->(wire) { Dinie::Customer.deserialize(wire) },
     "CustomerBankAccount" => ->(wire) { Dinie::CustomerBankAccount.deserialize(wire) },
-    "KycAttachmentResponse" => ->(wire) { Dinie::Kyc::AttachmentResponse.deserialize(wire) },
-    "KycRequirement" => ->(wire) { Dinie::Kyc.deserialize_requirement(wire) },
+    "KycAttachmentResponse" => ->(wire) { Dinie::KycAttachmentResponse.deserialize(wire) },
+    "KycRequirement" => ->(wire) { Dinie.deserialize_kyc_requirement(wire) },
     "Loan" => ->(wire) { Dinie::Loan.deserialize(wire) },
     "Simulation" => ->(wire) { Dinie::Simulation.deserialize(wire) },
     "Transaction" => ->(wire) { Dinie::Transaction.deserialize(wire) },
@@ -127,7 +127,8 @@ module ConformanceRoundTrip # rubocop:disable Metrics/ModuleLength
     "CreateCredentialRequest" => ->(kwargs) { Dinie::Credential.serialize_create(**kwargs) },
     "CreateCustomerRequest" => ->(kwargs) { Dinie::Customer.serialize_create(**kwargs) },
     "CreateLoanRequest" => ->(kwargs) { Dinie::Loan.serialize_create(**kwargs) },
-    "CreateSimulationRequest" => ->(kwargs) { Dinie::Simulation.serialize_create(**kwargs) },
+    # V0.5: method renamed to serialize_create_simulation (explicit verb — no ambiguity).
+    "CreateSimulationRequest" => ->(kwargs) { Dinie::Simulation.serialize_create_simulation(**kwargs) },
     "CreateWebhookEndpointRequest" => ->(kwargs) { Dinie::WebhookEndpoint.serialize_create(**kwargs) },
     "CustomerBankAccountRequest" => ->(kwargs) { Dinie::CustomerBankAccount.serialize_upsert(**kwargs) },
     "UpdateCustomerRequest" => ->(kwargs) { Dinie::Customer.serialize_update(**kwargs) },
@@ -136,7 +137,8 @@ module ConformanceRoundTrip # rubocop:disable Metrics/ModuleLength
 
   # Inline (anonymous-schema) request bodies, mapped by `operationId` -> serializer.
   ANON_REQUEST_BY_OP = {
-    "rotateWebhookSecret" => ->(kwargs) { Dinie::WebhookSecretRotation.serialize_rotate_secret(**kwargs) }
+    # V0.5: rotate_secret uses pass-through body — no serialize wrapper; kwargs IS the body.
+    "rotateWebhookSecret" => ->(kwargs) { kwargs }
   }.freeze
 
   # application/json examples we deliberately do NOT round-trip, each with a reason (the coverage
@@ -309,7 +311,7 @@ RSpec.describe "conformance · KYC discriminated union (deserialize_requirement 
 
   KYC_DISTINCT.each do |instance|
     it "KycRequirement[#{instance["requirement_type"]}]" do
-      result = Dinie::Kyc.deserialize_requirement(Conformance::Loader.deep_symbolize(instance))
+      result = Dinie.deserialize_kyc_requirement(Conformance::Loader.deep_symbolize(instance))
       expect(normalize_read(result)).to eq(normalize_read(instance))
     end
   end

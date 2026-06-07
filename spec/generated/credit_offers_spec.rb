@@ -36,7 +36,8 @@ RSpec.describe Dinie::Resources::CreditOffers do
 
       page = resource.list
       expect(page).to be_a(Dinie::Page)
-      expect(page.data.map(&:class)).to eq([Dinie::CreditOffer])
+      # V0.5: CreditOffer is a dispatch module; wire has installments:12 → FixedInstallmentCreditOffer.
+      expect(page.data.map(&:class)).to eq([Dinie::FixedInstallmentCreditOffer])
       expect(page.data.first.id).to eq("co_#{"1" * 32}")
       expect(page.data.first.approved_amount).to eq(50_000.0)
     end
@@ -77,7 +78,8 @@ RSpec.describe Dinie::Resources::CreditOffers do
         .to_return(status: 200, body: JSON.generate(offer_wire(id: "co_#{"1" * 32}")))
 
       offer = resource.retrieve("co_#{"1" * 32}")
-      expect(offer).to be_a(Dinie::CreditOffer)
+      # V0.5: CreditOffer is a dispatch module; wire has installments:12 → FixedInstallmentCreditOffer.
+      expect(offer).to be_a(Dinie::FixedInstallmentCreditOffer)
       expect(offer.status).to eq("available")
     end
 
@@ -123,8 +125,9 @@ RSpec.describe Dinie::Resources::CreditOffers do
   end
 
   describe "Simulation (de)serialization round-trips" do
-    it "serialize_create emits the two required keys, alphabetical, no extras" do
-      body = Dinie::Simulation.serialize_create(installment_count: 12, requested_amount: 25_000.0)
+    it "serialize_create_simulation emits the two required keys, alphabetical, no extras" do
+      # V0.5: serialize_create renamed to serialize_create_simulation.
+      body = Dinie::Simulation.serialize_create_simulation(installment_count: 12, requested_amount: 25_000.0)
       expect(body).to eq(installment_count: 12, requested_amount: 25_000.0)
       expect(body.keys).to eq(%i[installment_count requested_amount])
     end

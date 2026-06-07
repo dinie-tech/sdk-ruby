@@ -32,7 +32,7 @@ RSpec.describe "foundational types" do
           subject: { id: "003XXXXXXXXXXXXXXX", name: "Joao Silva", subject_type: "applicant" },
           submitted: {
             evidence_type: "cnh",
-            attachments: [{ attachment_type: "front", submitted_at: 1_772_791_200 }],
+            attachments: [{ attachment_type: "front", submitted: true }],
             review_status: "pending",
             review_reason: nil
           }
@@ -60,6 +60,8 @@ RSpec.describe "foundational types" do
   end
 
   let(:credit_offer_wire) do
+    # V0.5: FixedInstallmentCreditOffer has `installments` but NOT `min/max_installments`
+    # (those belong to RangeInstallmentCreditOffer — the DS-IMPLICIT union separates them).
     {
       approved_amount: 25_000.00,
       created_at: 1_700_000_000,
@@ -68,9 +70,7 @@ RSpec.describe "foundational types" do
       external_id: "partner-ref-123",
       id: "co_550e8400e29b41d4a716446655440000",
       installments: 12,
-      max_installments: nil,
       min_amount: 200.00,
-      min_installments: nil,
       monthly_interest_rate: 3.50,
       status: "available",
       updated_at: 1_700_000_500,
@@ -98,10 +98,10 @@ RSpec.describe "foundational types" do
     end
 
     it "hydrates kyc into the discriminated Kyc::* union (story 009)" do
-      expect(customer.kyc.map(&:class)).to eq([Dinie::Kyc::IdentityRequirement])
+      expect(customer.kyc.map(&:class)).to eq([Dinie::IdentityRequirement])
       expect(customer.kyc.first.requirement_type).to eq("identity")
-      expect(customer.kyc.first.subject).to be_a(Dinie::Kyc::Subject)
-      expect(customer.kyc.first.submitted).to be_a(Dinie::Kyc::Submitted)
+      expect(customer.kyc.first.subject).to be_a(Dinie::KycSubject)
+      expect(customer.kyc.first.submitted).to be_a(Dinie::Internal::Model)
     end
 
     it "sets an absent optional (kyc, omitted during `creating`) to nil but still declares it" do
@@ -199,15 +199,20 @@ RSpec.describe "foundational types" do
       expect(offer.approved_amount).to eq(25_000.00)
     end
 
-    it "keeps epoch fields Integer and treats the installments XOR fields as optional (nil)" do
+    it "keeps epoch fields Integer and dispatches to FixedInstallmentCreditOffer when installments is present" do
+      # V0.5 DS-IMPLICIT: presence of `installments` key → FixedInstallmentCreditOffer.
       expect(offer.valid_until).to be_an(Integer)
+      expect(offer).to be_a(Dinie::FixedInstallmentCreditOffer)
       expect(offer.installments).to eq(12)
-      expect(offer.min_installments).to be_nil
-      expect(offer.max_installments).to be_nil
+      # FixedInstallmentCreditOffer has no min/max_installments (those are RangeInstallmentCreditOffer fields).
+      expect(offer).not_to respond_to(:min_installments)
+      expect(offer).not_to respond_to(:max_installments)
     end
 
     it "has no serializer (offers are minted by the Core, never POSTed)" do
-      expect(Dinie::CreditOffer).not_to respond_to(:serialize_create)
+      # V0.5: CreditOffer is a dispatch module; neither Fixed nor Range has a serialize_create.
+      expect(Dinie::FixedInstallmentCreditOffer).not_to respond_to(:serialize_create)
+      expect(Dinie::RangeInstallmentCreditOffer).not_to respond_to(:serialize_create)
     end
   end
 
@@ -215,7 +220,8 @@ RSpec.describe "foundational types" do
     it "matches the example IDs against their schema patterns" do
       expect("cust_550e8400e29b41d4a716446655440000").to match(Dinie::Internal::ID_PATTERNS[:customer])
       expect("co_550e8400e29b41d4a716446655440000").to match(Dinie::Internal::ID_PATTERNS[:credit_offer])
-      expect("dinie_ci_550e8400e29b41d4a716446655440000").to match(Dinie::Internal::ID_PATTERNS[:api_client])
+      # V0.5 ApiClientId pattern now requires live|test segment: dinie_ci_(live|test)_<alphanum>
+      expect("dinie_ci_live_550e8400e29b41d4a716446655440000").to match(Dinie::Internal::ID_PATTERNS[:api_client])
     end
 
     it "rejects the wrong prefix (cus_ is NOT cust_ — architecture R2)" do
@@ -227,12 +233,14 @@ RSpec.describe "foundational types" do
     it "exposes named constants equal to the wire values" do
       expect(Dinie::CustomerStatus::ACTIVE).to eq("active")
       expect(Dinie::CredentialStatus::REVOKED).to eq("revoked")
-      expect(Dinie::CreditOfferStatus::AVAILABLE).to eq("available")
+      # V0.5: CreditOfferStatus enum module removed (status is a plain string on the union variants).
+      expect(Dinie::LoanStatus::ACTIVE).to eq("active")
     end
 
     it "lists every value in ALL" do
       expect(Dinie::CustomerStatus::ALL).to eq(%w[creating pending_kyc under_review active denied])
-      expect(Dinie::CreditOfferStatus::ALL).to contain_exactly("available", "accepted", "expired")
+      # V0.5: CreditOfferStatus removed; verify another present enum.
+      expect(Dinie::ReviewStatus::ALL).to eq(%w[pending accepted rejected])
     end
   end
 end

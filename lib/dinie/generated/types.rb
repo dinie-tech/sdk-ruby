@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
-# Index of the `generated/types/` layer — required by the top-level barrel (`lib/dinie.rb`).
-# Pure types: these files extend only `Dinie::Internal::Model` / `Dinie::Internal::OMIT` from
-# the runtime (the controlled `generated → runtime` base import), never the transport. Ordered
-# deps-first (the id/enum/money catalogs, then the models).
-
-require_relative "types/ids"
-require_relative "types/enums"
-require_relative "types/money"
-require_relative "types/kyc"
+require_relative "types/bank"
+require_relative "types/biometrics_session"
 require_relative "types/credential"
 require_relative "types/credit_offer"
 require_relative "types/customer"
 require_relative "types/customer_bank_account"
-require_relative "types/biometrics_session"
-require_relative "types/bank"
+require_relative "types/ids"
+require_relative "types/kyc"
+require_relative "types/kyc_attachment_response"
+require_relative "types/loan"
+require_relative "types/money"
+require_relative "types/simulation"
+require_relative "types/transaction"
 require_relative "types/webhook_endpoint"
+require_relative "types/webhook_secret_rotation"

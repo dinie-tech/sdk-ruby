@@ -3,7 +3,7 @@
 # Shared webhook fixtures for the events tier (`spec/generated/events_spec.rb`) and the `extract`
 # tier (`spec/runtime/webhooks_spec.rb`). The 15 typed events keyed by `type`, each with its bespoke
 # snake-native `data` wire, plus the Standard Webhooks envelope builder and an HMAC signer mirroring
-# the verification mechanics under test. Wire shapes/values come from `openapi.yaml @ 3fcfd83`.
+# the verification mechanics under test. Wire shapes/values come from `openapi.yaml @ 3218365`.
 #
 # The `webhook_event_table` is verbose fixture DATA (15 events × multi-line `data` wires), so the
 # Metrics length cops are disabled for this support file — same intent as the generated layer's
@@ -18,7 +18,7 @@ module WebhookEventFixtures
       subject: { id: "003XXXXXXXXXXXXXXX", name: "Joao Silva", subject_type: "applicant" },
       submitted: {
         evidence_type: "selfie",
-        attachments: [{ attachment_type: "photo", submitted_at: 1_772_791_200 }],
+        attachments: [{ attachment_type: "photo", submitted: true }],
         review_status: "pending", review_reason: nil
       }
     }
@@ -60,14 +60,14 @@ module WebhookEventFixtures
         data_klass: Dinie::Events::CustomerKycUpdatedData, status: "active",
         data: { external_id: "partner-ref-1", id: "cust_1", kyc: [kyc_requirement_wire], status: "active" } },
       { type: "credit_offer.available", klass: Dinie::Events::CreditOfferAvailable,
-        data_klass: Dinie::Events::CreditOfferEventData, status: "available",
+        data_klass: Dinie::Events::CreditOfferData, status: "available",
         data: {
           approved_amount: 5000.0, customer_id: "cust_1", due_date_rule: "monthly_on_5th",
           external_id: "partner-ref-1", id: "co_1", installments: 12, min_amount: 100.0,
           monthly_interest_rate: 2.5, status: "available", valid_until: 1_775_000_000
         } },
       { type: "credit_offer.expired", klass: Dinie::Events::CreditOfferExpired,
-        data_klass: Dinie::Events::CreditOfferEventData, status: "expired",
+        data_klass: Dinie::Events::CreditOfferData, status: "expired",
         data: {
           approved_amount: 5000.0, customer_id: "cust_1", due_date_rule: nil,
           external_id: "partner-ref-1", id: "co_1", installments: 12, min_amount: 100.0,
@@ -108,7 +108,7 @@ module WebhookEventFixtures
       { type: "loan.cancelled", klass: Dinie::Events::LoanCancelled,
         data_klass: Dinie::Events::LoanStatusData, status: "cancelled",
         data: { error: nil, id: "ln_1", status: "cancelled" } },
-      { type: "loan.error", klass: Dinie::Events::LoanError,
+      { type: "loan.error", klass: Dinie::Events::LoanErrorEvent,
         data_klass: Dinie::Events::LoanStatusData, status: "error",
         data: {
           error: { code: "disbursement_failed", message: "Bank rejected the transfer" },

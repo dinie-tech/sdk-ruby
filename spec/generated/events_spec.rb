@@ -81,8 +81,9 @@ RSpec.describe Dinie::Events do
       cancelled = build_event("loan.cancelled")
       errored = build_event("loan.error")
 
+      # V0.5: LoanError renamed to LoanErrorEvent (event class); LoanError is now the data model.
       expect([finished, cancelled, errored].map(&:class)).to eq(
-        [Dinie::Events::LoanFinished, Dinie::Events::LoanCancelled, Dinie::Events::LoanError]
+        [Dinie::Events::LoanFinished, Dinie::Events::LoanCancelled, Dinie::Events::LoanErrorEvent]
       )
       expect([finished.data, cancelled.data, errored.data]).to all(be_a(Dinie::Events::LoanStatusData))
     end
@@ -92,13 +93,13 @@ RSpec.describe Dinie::Events do
     it "hydrates customer.created data.kyc through Kyc.deserialize_requirement (by class)" do
       event = build_event("customer.created")
 
-      expect(event.data.kyc).to all(be_a(Dinie::Kyc::Requirement))
-      expect(event.data.kyc.first).to be_a(Dinie::Kyc::SelfieRequirement)
-      expect(event.data.kyc.first.submitted).to be_a(Dinie::Kyc::Submitted)
+      expect(event.data.kyc).to all(be_a(Dinie::KycRequirement))
+      expect(event.data.kyc.first).to be_a(Dinie::SelfieRequirement)
+      expect(event.data.kyc.first.submitted).to be_a(Dinie::Internal::Model)
     end
 
     it "hydrates customer.kyc_updated data.kyc the same way" do
-      expect(build_event("customer.kyc_updated").data.kyc.first).to be_a(Dinie::Kyc::SelfieRequirement)
+      expect(build_event("customer.kyc_updated").data.kyc.first).to be_a(Dinie::SelfieRequirement)
     end
   end
 
@@ -124,7 +125,8 @@ RSpec.describe Dinie::Events do
       errored = build_event("loan.error")
       finished = build_event("loan.finished")
 
-      expect(errored.data.error).to be_a(Dinie::Events::LoanErrorDetails)
+      # V0.5: LoanErrorDetails renamed to LoanError (the data model class).
+      expect(errored.data.error).to be_a(Dinie::Events::LoanError)
       expect(errored.data.error.code).to eq("disbursement_failed")
       expect(errored.data.error.message).to eq("Bank rejected the transfer")
       expect(finished.data.error).to be_nil

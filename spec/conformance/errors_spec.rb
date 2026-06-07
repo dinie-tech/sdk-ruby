@@ -21,20 +21,18 @@ require_relative "loader"
 # No network, no time, no randomness — the request id is derived from the case index.
 #
 # ── Coverage of the 8 server-response classes (§6/§7, registry.rb) ──
-# Seven type URLs appear in the contract with examples → 7 classes covered: BadRequest(400),
-# Auth(401), NotFound(404), Conflict(409), Validation(422), RateLimit(429), Server(500). The 8th,
-# `PermissionError` (403 / `…/errors/forbidden`), is an ORPHAN: that type URL and any 403 are ABSENT
-# from the contract (tracked openapi PR **P1** — the SDK keeps the class as documented debt; the
-# registry has no `by_type` entry for `forbidden`, only a `by_status` 403 fallback). So it gets no
-# example coverage here BY DESIGN; the gate asserts exactly {8 classes} − {PermissionError} are
-# covered and flags P1 — it is not a regression.
+# V0.5 (@3218365): All 8 type URLs now appear in the contract with examples → 8 classes covered:
+# BadRequest(400), Auth(401), Permission(403), NotFound(404), Conflict(409), Validation(422),
+# RateLimit(429), Server(500). The P1 orphan (403 `…/errors/forbidden`) is resolved in V0.5 (X2).
 module ConformanceErrors
   module_function
 
   # openapi error `type` URL → the typed SDK class it must dispatch to (§6/§7, registry.rb).
+  # V0.5: `forbidden` URL now wired to PermissionError (X2 — P1 resolved in @3218365).
   TYPE_URL_TO_CLASS = {
     "https://docs.dinie.com/errors/invalid-request" => Dinie::BadRequestError,
     "https://docs.dinie.com/errors/authentication-failed" => Dinie::AuthError,
+    "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionError,
     "https://docs.dinie.com/errors/not-found" => Dinie::NotFoundError,
     "https://docs.dinie.com/errors/conflict" => Dinie::ConflictError,
     "https://docs.dinie.com/errors/validation-failed" => Dinie::ValidationError,
@@ -42,12 +40,8 @@ module ConformanceErrors
     "https://docs.dinie.com/errors/internal" => Dinie::ServerError
   }.freeze
 
-  # The 8th catalog class is intentionally uncovered — orphan type URL, tracked PR P1.
-  EXPECTED_UNCOVERED = {
-    "PermissionError" =>
-      "403 / `…/errors/forbidden` is absent from the contract (orphan); SDK keeps the class as " \
-      "documented debt — openapi PR P1 (architecture §6/§7, registry.rb)."
-  }.freeze
+  # V0.5: All 8 catalog classes are now covered; EXPECTED_UNCOVERED is empty.
+  EXPECTED_UNCOVERED = {}.freeze
 
   ALL_CATALOG_CLASSES = %w[
     BadRequestError AuthError PermissionError NotFoundError
@@ -120,7 +114,8 @@ end
 
 # ── Coverage gate ──────────────────────────────────────────────────────────────────────────────
 RSpec.describe "conformance · errors coverage gate" do
-  it "covers every catalog class by an example, except the documented orphan (P1)" do
+  # V0.5 (@3218365): all 8 catalog classes are covered — PermissionError P1 orphan resolved (X2).
+  it "covers every catalog class by an example (V0.5: all 8 including PermissionError)" do
     covered = ConformanceErrors::TYPE_URL_TO_CLASS.each_with_object([]) do |(type_url, klass), acc|
       acc << klass.name.split("::").last if ERROR_PLAN.covered_type_urls.include?(type_url)
     end
@@ -134,12 +129,11 @@ RSpec.describe "conformance · errors coverage gate" do
       "problem+json example records:            #{ERROR_PLAN.problem_records.size}",
       "distinct payloads tested:                #{ERROR_PLAN.cases.size}",
       "catalog classes covered by example:      #{covered.sort.join(", ")}",
-      "catalog classes intentionally uncovered: #{ConformanceErrors::EXPECTED_UNCOVERED.keys.join(", ")} " \
-      "— #{ConformanceErrors::EXPECTED_UNCOVERED.values.join("; ")}"
+      "catalog classes intentionally uncovered: #{ConformanceErrors::EXPECTED_UNCOVERED.keys.join(", ").then { |s| s.empty? ? "(none)" : s }}"
     ].join("\n")
 
     expect(missing).to eq([])
-    # The orphan must genuinely have NO example (else the P1 note is stale).
-    expect(ERROR_PLAN.covered_type_urls).not_to include(ConformanceErrors::FORBIDDEN_TYPE_URL)
+    # V0.5: PermissionError is now covered (forbidden URL present in @3218365).
+    expect(ERROR_PLAN.covered_type_urls).to include(ConformanceErrors::FORBIDDEN_TYPE_URL)
   end
 end

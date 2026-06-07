@@ -46,10 +46,12 @@ RSpec.describe "Dinie error model" do
   end
 
   describe Dinie::Internal::ERROR_REGISTRY do
-    it "maps all 7 contract type URLs to markers" do
+    it "maps all 8 contract type URLs to markers (V0.5: forbidden URL now wired — X2)" do
+      # V0.5 intentional change: PermissionError now has its URL wired (no longer a P1 orphan).
       expect(described_class[:by_type]).to eq(
         "https://docs.dinie.com/errors/invalid-request" => Dinie::BadRequestError,
         "https://docs.dinie.com/errors/authentication-failed" => Dinie::AuthError,
+        "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionError,
         "https://docs.dinie.com/errors/not-found" => Dinie::NotFoundError,
         "https://docs.dinie.com/errors/conflict" => Dinie::ConflictError,
         "https://docs.dinie.com/errors/validation-failed" => Dinie::ValidationError,
@@ -59,10 +61,11 @@ RSpec.describe "Dinie error model" do
     end
 
     it "covers all 8 markers by status" do
+      # V0.5: 503 is no longer in by_status (covered by fallback_5xx).
       expect(described_class[:by_status]).to eq(
         400 => Dinie::BadRequestError, 401 => Dinie::AuthError, 403 => Dinie::PermissionError,
         404 => Dinie::NotFoundError, 409 => Dinie::ConflictError, 422 => Dinie::ValidationError,
-        429 => Dinie::RateLimitError, 500 => Dinie::ServerError, 503 => Dinie::ServerError
+        429 => Dinie::RateLimitError, 500 => Dinie::ServerError
       )
     end
 
@@ -70,8 +73,9 @@ RSpec.describe "Dinie error model" do
       expect(described_class[:fallback_5xx]).to eq(Dinie::ServerError)
     end
 
-    it "leaves PermissionError out of by_type (P1 orphan-URL debt)" do
-      expect(described_class[:by_type].values).not_to include(Dinie::PermissionError)
+    it "includes PermissionError in by_type (V0.5 X2: P1 orphan-URL debt resolved)" do
+      # V0.5 intentional change: the 403 forbidden URL is now wired in the registry.
+      expect(described_class[:by_type].values).to include(Dinie::PermissionError)
       expect(described_class[:by_status][403]).to eq(Dinie::PermissionError)
     end
 

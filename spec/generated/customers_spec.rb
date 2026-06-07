@@ -209,7 +209,8 @@ RSpec.describe Dinie::Resources::Customers do
 
       session = customers.create_biometrics_session(customer_id)
 
-      expect(a_request(:post, url).with { |req| req.body.nil? || req.body.empty? }).to have_been_made
+      # V0.5: anonymous body is pass-through (fields hash); sends {} when no kwargs passed.
+      expect(a_request(:post, url).with { |req| req.body.nil? || req.body.empty? || req.body == "{}" }).to have_been_made
       expect(session).to be_a(Dinie::BiometricsSession)
       expect(session.session_url).to start_with("https://biometrics.dinie.com.br/")
       expect(session.expires_at).to eq(1_741_082_400)
@@ -227,7 +228,8 @@ RSpec.describe Dinie::Resources::Customers do
       page = customers.credit_offers.list(customer_id, limit: 5)
 
       expect(page).to be_a(Dinie::Page)
-      expect(page.data.map(&:class)).to eq([Dinie::CreditOffer])
+      # V0.5: CreditOffer is a dispatch module; with installments:12 the variant is Fixed.
+      expect(page.data.map(&:class)).to eq([Dinie::FixedInstallmentCreditOffer])
       expect(page.data.first.id).to eq("co_1")
     end
 
@@ -283,8 +285,9 @@ RSpec.describe Dinie::Resources::Customers do
 
       customer = customers.retrieve(customer_id)
 
-      expect(customer.kyc.map(&:class)).to eq([Dinie::Kyc::IdentityRequirement, Dinie::Kyc::CompanyDocumentRequirement])
-      expect(customer.kyc.first.subject).to be_a(Dinie::Kyc::Subject)
+      # V0.5: classes are now directly under Dinie (no Kyc:: namespace)
+      expect(customer.kyc.map(&:class)).to eq([Dinie::IdentityRequirement, Dinie::CompanyDocumentRequirement])
+      expect(customer.kyc.first.subject).to be_a(Dinie::KycSubject)
     end
 
     it "passes an empty kyc array through as []" do

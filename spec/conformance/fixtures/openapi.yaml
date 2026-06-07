@@ -16,8 +16,8 @@ info:
 servers:
 - url: https://api.dinie.com.br/api/v3
   description: Production
-- url: https://sandbox.api.dinie.com.br/api/v3
-  description: Sandbox
+- url: https://staging-api.dinie.com.br/api/v3
+  description: Staging
 security:
 - bearerAuth: []
 tags:
@@ -209,18 +209,13 @@ paths:
       responses:
         '201':
           description: Credential created
-          headers:
-            Location:
-              schema:
-                type: string
-              example: /v3/auth/credentials/dinie_ci_550e8400e29b41d4a716446655440000
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CredentialWithSecret'
               example:
-                id: dinie_ci_550e8400e29b41d4a716446655440000
-                client_id: dinie_ci_550e8400e29b41d4a716446655440000
+                id: dinie_ci_live_550e8400e29b41d4a71644
+                client_id: dinie_ci_live_550e8400e29b41d4a71644
                 name: Chave de Produção
                 status: active
                 client_secret: dinie_cs_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
@@ -411,8 +406,8 @@ paths:
                     type: boolean
               example:
                 data:
-                - id: dinie_ci_550e8400e29b41d4a716446655440000
-                  client_id: dinie_ci_550e8400e29b41d4a716446655440000
+                - id: dinie_ci_live_550e8400e29b41d4a71644
+                  client_id: dinie_ci_live_550e8400e29b41d4a71644
                   name: Chave de Produção
                   status: active
                   expires_at: 1803945600
@@ -581,7 +576,7 @@ paths:
       x-codeSamples:
       - lang: curl
         source: |
-          curl -X DELETE https://api.dinie.com.br/api/v3/auth/credentials/dinie_ci_550e8400e29b41d4a716446655440000 \
+          curl -X DELETE https://api.dinie.com.br/api/v3/auth/credentials/dinie_ci_live_550e8400e29b41d4a71644 \
             -H "Authorization: Bearer $DINIE_API_TOKEN"
       - lang: Python
         source: |
@@ -593,7 +588,7 @@ paths:
           )
 
           # Revoke a compromised credential
-          client.auth.revoke_credential("dinie_ci_550e8400e29b41d4a716446655440000")
+          client.auth.revoke_credential("dinie_ci_live_550e8400e29b41d4a71644")
           # 204 No Content -- credential revoked immediately
       - lang: Node.js
         source: |
@@ -605,7 +600,7 @@ paths:
           });
 
           // Revoke a compromised credential
-          await client.auth.revokeCredential("dinie_ci_550e8400e29b41d4a716446655440000");
+          await client.auth.revokeCredential("dinie_ci_live_550e8400e29b41d4a71644");
           // 204 No Content -- credential revoked immediately
       - lang: Ruby
         source: |
@@ -617,7 +612,7 @@ paths:
           )
 
           # Revoke a compromised credential
-          client.auth.revoke_credential("dinie_ci_550e8400e29b41d4a716446655440000")
+          client.auth.revoke_credential("dinie_ci_live_550e8400e29b41d4a71644")
           # 204 No Content -- credential revoked immediately
 
   /customers:
@@ -642,11 +637,6 @@ paths:
       responses:
         '201':
           description: Customer created
-          headers:
-            Location:
-              schema:
-                type: string
-              example: /v3/customers/cust_550e8400e29b41d4a716446655440000
           content:
             application/json:
               schema:
@@ -789,7 +779,7 @@ paths:
                       invalid_cpf: CPF fails check-digit validation
                       invalid_cnpj: CNPJ fails check-digit validation
                       invalid_email: Email format is invalid
-                      invalid_phone: Phone format is invalid (expected E.164)
+                      invalid_phone: Phone format is invalid (expected E.164 with +55 country code)
               examples:
                 missing_required_field:
                   summary: '`cpf` is missing (required for all customers)'
@@ -824,12 +814,12 @@ paths:
                     detail: Email format is invalid
                     code: invalid_email
                 invalid_phone:
-                  summary: Phone format is invalid (expected E.164)
+                  summary: Phone format is invalid (expected E.164 with +55 country code)
                   value:
                     type: https://docs.dinie.com/errors/validation-failed
                     title: Validation Failed
                     status: 422
-                    detail: Phone format is invalid (expected E.164)
+                    detail: Phone format is invalid (expected E.164 with +55 country code)
                     code: invalid_phone
         '429':
           $ref: '#/components/responses/RateLimited'
@@ -1160,6 +1150,8 @@ paths:
       description: Return the full customer object including registration data, status, and KYC progress
       tags:
       - Customers
+      security:
+      - oauth2: ["kyc:read"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
       responses:
@@ -1192,12 +1184,12 @@ paths:
                     evidence_type: cnh
                     attachments:
                     - attachment_type: front
-                      submitted_at: 1772791200
+                      submitted: true
                     - attachment_type: back
-                      submitted_at: 1772791500
+                      submitted: true
                     review_status: accepted
                     review_reason: null
-                - requirement_id: company_document
+                - requirement_id: company_document_001XXXXXXXXXXXXXXX
                   requirement_type: company_document
                   label: Documento da empresa
                   mandatory: true
@@ -1205,7 +1197,7 @@ paths:
                     evidence_type: ccmei
                     attachments:
                     - attachment_type: file
-                      submitted_at: 1772792100
+                      submitted: true
                     review_status: accepted
                     review_reason: null
                 - requirement_id: email_003YYYYYYYYYYYYYYY
@@ -1214,19 +1206,22 @@ paths:
                   mandatory: true
                   subject:
                     id: 003YYYYYYYYYYYYYYY
-                    name: Joao Silva
+                    name: Maria Co-owner
                     subject_type: co_owner
                   submitted:
                     evidence_type: email
                     attachments:
                     - attachment_type: email
-                      submitted_at: 1772792400
+                      submitted: true
                     review_status: pending
                     review_reason: null
                 created_at: 1772791200
                 updated_at: 1772805600
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `kyc:read` scope, or the session token is bound to a different customer
         '404':
           description: Not found
           content:
@@ -1489,7 +1484,7 @@ paths:
                     - invalid_phone
                     x-enumDescriptions:
                       invalid_email: Email format is invalid
-                      invalid_phone: Phone format is invalid (expected E.164)
+                      invalid_phone: Phone format is invalid (expected E.164 with +55 country code)
               examples:
                 invalid_email:
                   summary: Email format is invalid
@@ -1500,12 +1495,12 @@ paths:
                     detail: Email format is invalid
                     code: invalid_email
                 invalid_phone:
-                  summary: Phone format is invalid (expected E.164)
+                  summary: Phone format is invalid (expected E.164 with +55 country code)
                   value:
                     type: https://docs.dinie.com/errors/validation-failed
                     title: Validation Failed
                     status: 422
-                    detail: Phone format is invalid (expected E.164)
+                    detail: Phone format is invalid (expected E.164 with +55 country code)
                     code: invalid_phone
         '429':
           $ref: '#/components/responses/RateLimited'
@@ -1585,6 +1580,8 @@ paths:
       description: 'Upload a KYC attachment for the customer via `multipart/form-data`. For document requirements, send a `file`. For data-type requirements (e.g. email), send a `value` instead.'
       tags:
       - Customers
+      security:
+      - oauth2: ["kyc:upload"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1619,37 +1616,14 @@ paths:
                   email: '#/components/schemas/KycUploadEmail'
       responses:
         '201':
-          description: Document uploaded
-          headers:
-            Location:
-              schema:
-                type: string
-              example: /v3/customers/cust_550e8400e29b41d4a716446655440000/kyc-attachments/ka_550e8400e29b41d4a716446655440001
+          description: Attachment slot filled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/KycAttachmentResponse'
               example:
-                id: ka_550e8400e29b41d4a716446655440001
-                uploaded_at: 1772791200
-                requirement:
-                  requirement_id: identity_003XXXXXXXXXXXXXXX
-                  requirement_type: identity
-                  label: Documento de identidade
-                  mandatory: true
-                  subject:
-                    id: 003XXXXXXXXXXXXXXX
-                    name: Joao Silva
-                    subject_type: applicant
-                  submitted:
-                    evidence_type: cnh
-                    attachments:
-                    - attachment_type: front
-                      submitted_at: 1772791200
-                    - attachment_type: back
-                      submitted_at:
-                    review_status: pending
-                    review_reason: null
+                attachment_type: front
+                submitted: true
         '400':
           description: Bad request
           content:
@@ -1721,6 +1695,9 @@ paths:
                     code: file_too_large
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `kyc:upload` scope, or the session token is bound to a different customer
         '404':
           description: Not found
           content:
@@ -1759,6 +1736,44 @@ paths:
                     status: 404
                     detail: Customer ID does not exist or does not belong to this partner
                     code: customer_not_found
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required:
+                - type
+                - title
+                - status
+                - detail
+                - code
+                properties:
+                  type:
+                    type: string
+                    const: https://docs.dinie.com/errors/conflict
+                  title:
+                    type: string
+                    const: Conflict
+                  status:
+                    type: integer
+                    const: 409
+                  detail:
+                    type: string
+                  code:
+                    type: string
+                    const: email_already_exists
+                    x-enumDescriptions:
+                      email_already_exists: Director email is already set and cannot be overwritten
+              examples:
+                email_already_exists:
+                  summary: Director email is already set
+                  value:
+                    type: https://docs.dinie.com/errors/conflict
+                    title: Conflict
+                    status: 409
+                    detail: Director email already set
+                    code: email_already_exists
         '422':
           description: Validation failed
           content:
@@ -1839,7 +1854,7 @@ paths:
               file=open("cnh-front.jpg", "rb")
           )
 
-          print(attachment.id)      # "ka_550e8400..."
+          print(attachment.submitted)  # True
       - lang: Node.js
         source: |
           const fs = require("fs");
@@ -1861,7 +1876,7 @@ paths:
             }
           );
 
-          console.log(attachment.id);      // "ka_550e8400..."
+          console.log(attachment.submitted);  // true
       - lang: Ruby
         source: |
           require "dinie"
@@ -1880,16 +1895,73 @@ paths:
             file: File.open("cnh-front.jpg")
           )
 
-          puts attachment.id      # "ka_550e8400..."
+          puts attachment.submitted  # true
+
+  /customers/{customer_id}/kyc-attachments/selfie:
+    post:
+      operationId: uploadKycSelfie
+      summary: Upload a KYC selfie
+      description: >-
+        Session-only upload of a selfie for biometric validation.
+        Counterpart of the polymorphic `/kyc-attachments` route, dedicated
+        to selfies: `evidence_type` (`selfie`) and `attachment_type`
+        (`photo`) are implicit, so the partner only supplies
+        `requirement_id` (`selfie_{subject_id}`) and the `file`. Requires
+        a session token bound to the customer — a partner bearer is
+        denied (403), even with `kyc:upload`.
+      tags:
+      - Customers
+      x-internal: true
+      security:
+      - oauth2: ["kyc:upload"]
+      parameters:
+      - $ref: '#/components/parameters/CustomerId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - requirement_id
+              - file
+              properties:
+                requirement_id:
+                  type: string
+                  description: 'Format: `selfie_{subject_id}`.'
+                  example: selfie_003XXXXXXXXXXXXXXX
+                file:
+                  type: string
+                  format: binary
+                  description: Binary file upload (JPEG, PNG).
+              description: Selfie photo upload payload.
+      responses:
+        '201':
+          description: Selfie slot filled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycAttachmentResponse'
+              example:
+                attachment_type: photo
+                submitted: true
+        '401':
+          $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Only a session token bound to this customer with the `kyc:upload` scope may upload a selfie — partner bearers are always denied
 
   /customers/{customer_id}/kyc-review:
     post:
       operationId: startKycReview
-      x-internal: true
       summary: Submit documents for KYC review
       description: Signal that all KYC documents have been uploaded and are ready for review. Submits documents to the verification pipeline. Also handles resubmission after document corrections.
       tags:
       - Customers
+      x-internal: true
+      security:
+      - oauth2: ["kyc:submit"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
       responses:
@@ -1897,6 +1969,9 @@ paths:
           description: Review started
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Only a session token bound to this customer with the `kyc:submit` scope may submit KYC — partner bearers are always denied
         '404':
           description: Not found
           content:
@@ -1947,6 +2022,8 @@ paths:
       description: Return the bank account currently linked to this customer, if one exists.
       tags:
       - Customers
+      security:
+      - oauth2: ["kyc:read"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
       responses:
@@ -1958,6 +2035,9 @@ paths:
                 $ref: '#/components/schemas/CustomerBankAccount'
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `kyc:read` scope, or the session token is bound to a different customer
         '404':
           description: Bank account not found
         '429':
@@ -1970,6 +2050,8 @@ paths:
       description: Create or update the bank account linked to this customer. This endpoint is available to biometrics session tokens so the kyc-app can collect disbursement bank data.
       tags:
       - Customers
+      security:
+      - oauth2: ["kyc:upload"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
       requestBody:
@@ -1992,6 +2074,9 @@ paths:
                 $ref: '#/components/schemas/CustomerBankAccount'
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `kyc:upload` scope, or the session token is bound to a different customer
         '422':
           description: Validation failed
           content:
@@ -2053,6 +2138,8 @@ paths:
       description: List banks available for customer bank account submission.
       tags:
       - Customers
+      security:
+      - oauth2: ["kyc:read"]
       responses:
         '200':
           description: Banks
@@ -2069,6 +2156,9 @@ paths:
                       $ref: '#/components/schemas/Bank'
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `kyc:read` scope
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -2078,23 +2168,43 @@ paths:
     post:
       operationId: createBiometricsSession
       summary: Create a biometrics capture session
-      description: Generate a temporary biometrics capture URL for the customer
+      description: >-
+        Generate a single-use bootstrap code for the customer-facing biometrics
+        flow. The response includes a `session_url` the partner can embed or
+        redirect to — the kyc-app reads the code from the URL and exchanges it
+        for a scoped session token via `POST /biometrics/session-exchange`.
       tags:
       - Customers
+      security:
+      - oauth2: ["biometrics:create"]
       parameters:
       - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                return_url:
+                  type: string
+                  format: uri
+                  description: Optional URL the customer-facing app sends the user back to when the flow finishes.
       responses:
-        '200':
+        '201':
           description: Biometrics session created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BiometricsSession'
               example:
-                session_url: 'https://biometrics.dinie.com.br/session/abc123def456'
+                session_url: 'https://kyc-app.dinie.com.br/session/dinie_bsc_test_abc123def456'
                 expires_at: 1741082400
         '401':
           $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `biometrics:create` scope, or the session token is bound to a different customer
         '404':
           description: Not found
           content:
@@ -2271,6 +2381,68 @@ paths:
           puts session.expires_at   # 1741082400
           # Redirect the customer to session.session_url
 
+  /biometrics/session-exchange:
+    post:
+      operationId: exchangeBiometricsSession
+      summary: Exchange a biometrics bootstrap code for a session token
+      description: >-
+        Internal endpoint — the kyc-app calls this with a credential that
+        only has the `biometrics:exchange` scope, swapping the single-use
+        bootstrap code (`dinie_bsc_…`) for a Token bound to the session's
+        CreditLineApplication. The token is the bearer the wizard uses
+        for every subsequent KYC request.
+      tags:
+      - Customers
+      x-internal: true
+      security:
+      - oauth2: ["biometrics:exchange"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: The single-use bootstrap code returned by `POST /customers/{customer_id}/biometrics`.
+                  example: dinie_bsc_test_abc123def456
+      responses:
+        '200':
+          description: Session token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - token_type
+                - expires_in
+                - customer_id
+                properties:
+                  access_token:
+                    type: string
+                    description: "Opaque session token. Use as `Authorization: Bearer …`."
+                    example: dinie_at_test_abc123def456
+                  token_type:
+                    type: string
+                    const: bearer
+                  expires_in:
+                    type: integer
+                    description: Seconds until the issued token expires.
+                    example: 3600
+                  customer_id:
+                    type: string
+                    description: Encoded id of the customer the token is bound to.
+                    example: cust_550e8400e29b41d4a716446655440000
+        '401':
+          $ref: '#/components/responses/BearerTokenUnauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          description: Credential lacks the `biometrics:exchange` scope (this endpoint is reserved for the kyc-app exchange credential)
+
   /customers/{customer_id}/credit-offers:
     get:
       operationId: listCustomerCreditOffers
@@ -2435,7 +2607,7 @@ paths:
           )
 
           for offer in offers.data:
-              print(f"{offer.id}: R$ {offer.approved_amount} ({offer.interest_rate}% a.m.)")
+              print(f"{offer.id}: R$ {offer.approved_amount} ({offer.monthly_interest_rate}% a.m.)")
               # "co_550e8400...: R$ 50000.00 (3.5% a.m.)"
       - lang: Node.js
         source: |
@@ -2472,7 +2644,7 @@ paths:
           )
 
           offers.data.each do |offer|
-            puts "#{offer.id}: R$ #{offer.approved_amount} (#{offer.interest_rate}% a.m.)"
+            puts "#{offer.id}: R$ #{offer.approved_amount} (#{offer.monthly_interest_rate}% a.m.)"
             # "co_550e8400...: R$ 50000.00 (3.5% a.m.)"
           end
 
@@ -2793,7 +2965,7 @@ paths:
 
           print(offer.approved_amount)  # 50000.00
           print(offer.min_amount)       # 200.00
-          print(offer.interest_rate)    # 3.50
+          print(offer.monthly_interest_rate)    # 3.50
           print(offer.valid_until)      # 1775253599
       - lang: Node.js
         source: |
@@ -2827,7 +2999,7 @@ paths:
 
           puts offer.approved_amount  # 50000.00
           puts offer.min_amount       # 200.00
-          puts offer.interest_rate    # 3.50
+          puts offer.monthly_interest_rate    # 3.50
           puts offer.valid_until      # 1775253599
 
   /credit-offers/{credit_offer_id}/simulations:
@@ -3063,7 +3235,7 @@ paths:
 
           print(simulation.id)                  # "sim_550e8400..."
           print(simulation.installment_amount)   # 7997.34
-          print(simulation.cet_rate)             # 233.18
+          print(simulation.annual_cet_rate)      # 233.18
           print(simulation.total_amount)         # 31989.36
           print(simulation.first_due_date)       # "2026-04-03"
       - lang: Node.js
@@ -3107,7 +3279,7 @@ paths:
 
           puts simulation.id                  # "sim_550e8400..."
           puts simulation.installment_amount   # 7997.34
-          puts simulation.cet_rate             # 233.18
+          puts simulation.annual_cet_rate      # 233.18
           puts simulation.total_amount         # 31989.36
           puts simulation.first_due_date       # "2026-04-03"
 
@@ -3134,11 +3306,6 @@ paths:
       responses:
         '201':
           description: Loan created
-          headers:
-            Location:
-              schema:
-                type: string
-              example: /v3/loans/ln_550e8400e29b41d4a716446655440001
           content:
             application/json:
               schema:
@@ -3856,11 +4023,6 @@ paths:
       responses:
         '201':
           description: Webhook endpoint created
-          headers:
-            Location:
-              schema:
-                type: string
-              example: /v3/webhooks/endpoints/we_550e8400e29b41d4a716446655440000
           content:
             application/json:
               schema:
@@ -4066,6 +4228,9 @@ paths:
       description: List all configured webhook endpoints with URL, subscribed events, and status
       tags:
       - Webhooks
+      parameters:
+      - $ref: '#/components/parameters/StartingAfter'
+      - $ref: '#/components/parameters/Limit'
       responses:
         '200':
           description: List of webhook endpoints
@@ -4850,6 +5015,125 @@ paths:
           puts rotation.secret                       # "whsec_novo1b2c3..."
           puts rotation.previous_secret_expires_at   # 1709550000
 
+  /webhooks/endpoints/{endpoint_id}/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      summary: List webhook deliveries
+      description: Paginated delivery history for a webhook endpoint, newest first
+      tags:
+      - Webhooks
+      parameters:
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/WebhookEndpointId'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: starting_after
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/WebhookDeliveryId'
+      responses:
+        '200':
+          description: Delivery history
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - has_more
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookDelivery'
+                  has_more:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/BearerTokenUnauthorized'
+        '404':
+          $ref: '#/components/responses/WebhookEndpointNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /webhooks/endpoints/{endpoint_id}/deliveries/{id}/retry:
+    post:
+      operationId: retryWebhookDelivery
+      summary: Retry a failed webhook delivery
+      description: Reset a failed delivery and re-enqueue it. Only deliveries in `failed` status can be retried.
+      tags:
+      - Webhooks
+      parameters:
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/WebhookEndpointId'
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/WebhookDeliveryId'
+      responses:
+        '200':
+          description: Delivery reset and re-enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDelivery'
+        '401':
+          $ref: '#/components/responses/BearerTokenUnauthorized'
+        '404':
+          $ref: '#/components/responses/WebhookEndpointNotFound'
+        '409':
+          description: Delivery not retryable
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required:
+                - type
+                - title
+                - status
+                - detail
+                - code
+                properties:
+                  type:
+                    type: string
+                    const: https://docs.dinie.com/errors/conflict
+                  title:
+                    type: string
+                    const: Conflict
+                  status:
+                    type: integer
+                    const: 409
+                  detail:
+                    type: string
+                  code:
+                    type: string
+                    const: delivery_not_retryable
+              example:
+                type: https://docs.dinie.com/errors/conflict
+                title: Conflict
+                status: 409
+                detail: Only failed deliveries can be retried
+                code: delivery_not_retryable
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
 # ── Webhook Defaults (YAML anchors) ──────────────────────────────────────────
 x-webhook-defaults:
   security: &webhook-security
@@ -4970,7 +5254,7 @@ webhooks:
                 status: pending_kyc
                 external_id: partner-ref-123
                 kyc:
-                - requirement_id: company_document
+                - requirement_id: company_document_001XXXXXXXXXXXXXXX
                   requirement_type: company_document
                   label: Documento da empresa
                   mandatory: true
@@ -4978,7 +5262,7 @@ webhooks:
                     evidence_type: ccmei
                     attachments:
                     - attachment_type: file
-                      submitted_at: 1772794800
+                      submitted: true
                     review_status: accepted
                     review_reason: null
                 - requirement_id: identity_003XXXXXXXXXXXXXXX
@@ -5361,11 +5645,21 @@ components:
       description: JWT token obtained via OAuth2 Client Credentials (`POST /auth/token`). Expires in 1 hour.
     oauth2:
       type: oauth2
-      description: OAuth2 Client Credentials flow for obtaining access tokens.
+      description: >-
+        OAuth2 Client Credentials flow. The credential's `allowed_scopes`
+        gates which of these can be requested; the issued token inherits
+        that set (down-scoping a single request is reserved for a future
+        revision). Per-operation `security` lists the scopes the request
+        must carry.
       flows:
         clientCredentials:
           tokenUrl: /v3/auth/token
-          scopes: {}
+          scopes:
+            "kyc:read":           Read a customer's KYC state (requirements, attachments, status).
+            "kyc:upload":         Upload a KYC attachment (document or selfie via the dedicated route).
+            "kyc:submit":         Submit a customer's KYC bundle for review.
+            "biometrics:create":  Mint a biometrics capture session for a customer (partner side of the handoff).
+            "biometrics:exchange": Exchange a biometrics bootstrap code for a scoped session token (kyc-app side of the handoff).
     webhookSignature:
       type: apiKey
       in: header
@@ -5509,6 +5803,39 @@ components:
             title: Internal Error
             status: 500
             detail: An unexpected error occurred.
+    WebhookEndpointNotFound:
+      description: Webhook endpoint (or delivery) not found
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required:
+            - type
+            - title
+            - status
+            - detail
+            - code
+            properties:
+              type:
+                type: string
+                const: https://docs.dinie.com/errors/not-found
+              title:
+                type: string
+                const: Not Found
+              status:
+                type: integer
+                const: 404
+              detail:
+                type: string
+              code:
+                type: string
+                const: not_found
+          example:
+            type: https://docs.dinie.com/errors/not-found
+            title: Not Found
+            status: 404
+            detail: Endpoint ID does not exist or does not belong to this partner
+            code: not_found
     BearerTokenUnauthorized:
       description: Authentication failed
       content:
@@ -5647,6 +5974,42 @@ components:
                 status: 401
                 detail: Credential has passed its `expires_at`
                 code: credential_expired
+    Forbidden:
+      description: The credential is not permitted to perform this action
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required:
+            - type
+            - title
+            - status
+            - detail
+            - code
+            properties:
+              type:
+                type: string
+                const: https://docs.dinie.com/errors/forbidden
+              title:
+                type: string
+                const: Forbidden
+              status:
+                type: integer
+                const: 403
+              detail:
+                type: string
+              code:
+                type: string
+                const: forbidden
+          examples:
+            forbidden:
+              summary: The credential is not permitted to perform this action
+              value:
+                type: https://docs.dinie.com/errors/forbidden
+                title: Forbidden
+                status: 403
+                detail: Forbidden
+                code: forbidden
   schemas:
     CustomerId:
       description: Identificador único do cliente
@@ -5678,11 +6041,16 @@ components:
       type: string
       pattern: ^we_[0-9a-f]{32}$
       example: we_550e8400e29b41d4a716446655440000
-    ApiClientId:
-      description: Identificador único da credencial de API
+    WebhookDeliveryId:
+      description: Identificador único de uma tentativa de entrega de webhook
       type: string
-      pattern: ^dinie_ci_[0-9a-f]{32}$
-      example: dinie_ci_550e8400e29b41d4a716446655440000
+      pattern: ^dlv_[0-9a-f]{32}$
+      example: dlv_550e8400e29b41d4a716446655440000
+    ApiClientId:
+      description: Identificador único da credencial de API (inclui prefixo de ambiente `live`/`test`)
+      type: string
+      pattern: ^dinie_ci_(live|test)_[A-Za-z0-9]+$
+      example: dinie_ci_live_550e8400e29b41d4a71644
     BankAccountId:
       description: Identificador único da conta bancária
       type: string
@@ -5812,8 +6180,8 @@ components:
           example: joao@example.com
         phone:
           type: string
-          pattern: '^\+[1-9]\d{1,14}$'
-          description: E.164 format
+          pattern: '^\+55\d{10,11}$'
+          description: 'E.164 format — Brazilian numbers only (+55 followed by 10 or 11 digits)'
           example: '+5511999999999'
         cpf:
           type: string
@@ -5834,6 +6202,7 @@ components:
           format: email
         phone:
           type: string
+          pattern: '^\+55\d{10,11}$'
     Customer:
       description: Representação completa de um cliente cadastrado
       type: object
@@ -5984,7 +6353,6 @@ components:
         requirement_id:
           type: string
           description: 'Format: `identity_{subject_id}`'
-          pattern: '^identity_[A-Za-z0-9]{15,18}$'
           example: identity_003XXXXXXXXXXXXXXX
         label:
           type: string
@@ -6034,7 +6402,7 @@ components:
         type: object
         required:
         - attachment_type
-        - submitted_at
+        - submitted
         properties:
           attachment_type:
             type: string
@@ -6042,12 +6410,9 @@ components:
             enum:
             - front
             - back
-          submitted_at:
-            type:
-            - integer
-            - 'null'
-            format: int64
-            description: 'Unix epoch seconds. `null` if not yet uploaded.'
+          submitted:
+            type: boolean
+            description: '`true` if this slot has been filled.'
 
     CnhDigitalAttachmentSet:
       type: array
@@ -6058,18 +6423,15 @@ components:
         type: object
         required:
         - attachment_type
-        - submitted_at
+        - submitted
         properties:
           attachment_type:
             type: string
             description: Tipo do anexo da CNH digital
             const: file
-          submitted_at:
-            type:
-            - integer
-            - 'null'
-            format: int64
-            description: 'Unix epoch seconds. `null` if not yet uploaded.'
+          submitted:
+            type: boolean
+            description: '`true` if this slot has been filled.'
 
     IdentityRgSubmitted:
       type: object
@@ -6092,7 +6454,7 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
@@ -6100,12 +6462,9 @@ components:
                 enum:
                 - front
                 - back
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: 'Unix epoch seconds. `null` if not yet uploaded.'
+              submitted:
+                type: boolean
+                description: '`true` if this slot has been filled.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6129,7 +6488,6 @@ components:
         requirement_id:
           type: string
           description: 'Format: `selfie_{subject_id}`'
-          pattern: '^selfie_[A-Za-z0-9]{15,18}$'
           example: selfie_003XXXXXXXXXXXXXXX
         label:
           type: string
@@ -6166,18 +6524,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: photo
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6200,7 +6555,6 @@ components:
         requirement_id:
           type: string
           description: 'Format: `proof_of_address_{subject_id}`'
-          pattern: '^proof_of_address_[A-Za-z0-9]{15,18}$'
           example: proof_of_address_003XXXXXXXXXXXXXXX
         label:
           type: string
@@ -6237,18 +6591,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: file
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6269,8 +6620,8 @@ components:
           const: company_document
         requirement_id:
           type: string
-          description: Identificador fixo do requisito
-          const: company_document
+          description: 'Format: `company_document_{account_id}`'
+          example: company_document_001XXXXXXXXXXXXXXX
         label:
           type: string
           description: Rótulo legível do requisito
@@ -6304,18 +6655,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: file
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6371,7 +6719,7 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
@@ -6379,12 +6727,9 @@ components:
                 enum:
                 - ei_registration_requirement
                 - ccmei
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6440,18 +6785,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: file
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6507,18 +6849,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: file
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6574,18 +6913,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: file
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6608,7 +6944,6 @@ components:
         requirement_id:
           type: string
           description: 'Format: `email_{subject_id}`'
-          pattern: '^email_[A-Za-z0-9]{15,18}$'
           example: email_003XXXXXXXXXXXXXXX
         label:
           type: string
@@ -6645,18 +6980,15 @@ components:
             type: object
             required:
             - attachment_type
-            - submitted_at
+            - submitted
             properties:
               attachment_type:
                 type: string
                 description: Tipo do anexo enviado
                 const: email
-              submitted_at:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                description: Data de envio (Unix epoch seconds). `null` se ainda não enviado.
+              submitted:
+                type: boolean
+                description: '`true` se este slot já foi enviado.'
         review_status:
           $ref: '#/components/schemas/ReviewStatus'
         review_reason:
@@ -6682,313 +7014,18 @@ components:
     KycAttachmentResponse:
       type: object
       required:
-      - id
-      - uploaded_at
-      - requirement
-      properties:
-        id:
-          type: string
-          description: Attachment ID
-          example: ka_550e8400e29b41d4a716446655440001
-        uploaded_at:
-          type: integer
-          format: int64
-          description: When this attachment was uploaded (Unix epoch seconds).
-        requirement:
-          $ref: '#/components/schemas/KycRequirement'
-      description: Response from uploading a KYC attachment. Wraps the full requirement state after the upload.
-
-    # ── KYC Upload Request Variants ─────────────────────────────────
-    KycUploadCnh:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
       - attachment_type
-      - file
+      - submitted
       properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: cnh
-        requirement_id:
-          type: string
-          description: 'Format: `identity_{subject_id}`.'
-          pattern: '^identity_[A-Za-z0-9]{15,18}$'
-          example: identity_003XXXXXXXXXXXXXXX
         attachment_type:
           type: string
-          description: 'Physical CNH: `front` and `back`. Digital CNH: `file` (single PDF).'
-          enum:
-          - front
-          - back
-          - file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (JPEG, PNG for physical; PDF for digital).
-      description: Upload a CNH (driver's license) attachment.
+          description: Echoes the slot just submitted.
+          example: front
+        submitted:
+          type: boolean
+          description: Always `true` on a successful upload — confirms the slot was filled.
+      description: Confirmation that a KYC attachment slot was filled. Read the customer endpoint to see the full requirement state.
 
-    KycUploadRg:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: rg
-        requirement_id:
-          type: string
-          description: 'Format: `identity_{subject_id}`.'
-          pattern: '^identity_[A-Za-z0-9]{15,18}$'
-          example: identity_003XXXXXXXXXXXXXXX
-        attachment_type:
-          type: string
-          description: 'RG: `front` and `back`.'
-          enum:
-          - front
-          - back
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (JPEG, PNG).
-      description: Upload an RG (identity card) attachment.
-
-    KycUploadSelfie:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: selfie
-        requirement_id:
-          type: string
-          description: 'Format: `selfie_{subject_id}`.'
-          pattern: '^selfie_[A-Za-z0-9]{15,18}$'
-          example: selfie_003XXXXXXXXXXXXXXX
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: photo
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (JPEG, PNG).
-      description: Upload a selfie photo for biometric validation.
-
-    KycUploadProofOfAddress:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: proof_of_address
-        requirement_id:
-          type: string
-          description: 'Format: `proof_of_address_{subject_id}`.'
-          pattern: '^proof_of_address_[A-Za-z0-9]{15,18}$'
-          example: proof_of_address_003XXXXXXXXXXXXXXX
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload a proof of address document.
-
-    KycUploadCcmei:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: ccmei
-        requirement_id:
-          type: string
-          description: Identificador do requisito de documento da empresa
-          const: company_document
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload a CCMEI (Certificado da Condição de Microempreendedor Individual).
-
-    KycUploadEiMei:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: ei_mei
-        requirement_id:
-          type: string
-          description: Identificador do requisito de documentos EI/MEI
-          const: ei_mei_documents
-        attachment_type:
-          type: string
-          description: 'Two documents required: `ei_registration_requirement` and `ccmei`.'
-          enum:
-          - ei_registration_requirement
-          - ccmei
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload an EI/MEI document (registration requirement or CCMEI).
-
-    KycUploadIncomeStatement:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: income_statement
-        requirement_id:
-          type: string
-          description: Identificador do requisito de declaração de faturamento
-          const: income_statement
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload an income statement (DRE).
-
-    KycUploadArticlesOfAssociation:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: articles_of_association
-        requirement_id:
-          type: string
-          description: Identificador do requisito de contrato social
-          const: articles_of_association
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload articles of association (contrato social).
-
-    KycUploadEireliIncorporation:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - file
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: eireli_incorporation_statement
-        requirement_id:
-          type: string
-          description: Identificador do requisito de ato constitutivo de EIRELI
-          const: eireli_incorporation_statement
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: file
-        file:
-          type: string
-          format: binary
-          description: Binary file upload (PDF, JPEG, PNG).
-      description: Upload an EIRELI incorporation statement (ato constitutivo).
-
-    KycUploadEmail:
-      type: object
-      required:
-      - evidence_type
-      - requirement_id
-      - attachment_type
-      - value
-      properties:
-        evidence_type:
-          type: string
-          description: Tipo de evidência a ser enviada
-          const: email
-        requirement_id:
-          type: string
-          description: 'Format: `email_{subject_id}`.'
-          pattern: '^email_[A-Za-z0-9]{15,18}$'
-          example: email_003XXXXXXXXXXXXXXX
-        attachment_type:
-          type: string
-          description: Tipo do anexo
-          const: email
-        value:
-          type: string
-          format: email
-          description: Email address for the co-owner (used for CCB digital signature).
-          example: co-owner@example.com
-      description: Submit a co-owner email address for CCB signature.
-
-    BiometricsSession:
-      description: Sessão de biometria para validação de identidade
-      type: object
-      required:
-      - session_url
-      - expires_at
-      properties:
-        session_url:
-          type: string
-          format: uri
-          description: URL for the partner to embed in their flow (webview or redirect)
-          example: https://biometrics.dinie.com.br/session/...
-        expires_at:
-          type: integer
-          format: int64
-          example: 1772748000
-          description: Expiration timestamp (Unix epoch seconds).
     Bank:
       type: object
       required:
@@ -7058,8 +7095,304 @@ components:
             type: integer
             format: int64
 
+    # ── KYC Upload Request Variants ─────────────────────────────────
+    KycUploadCnh:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: cnh
+        requirement_id:
+          type: string
+          description: 'Format: `identity_{subject_id}`.'
+          example: identity_003XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: 'Physical CNH: `front` and `back`. Digital CNH: `file` (single PDF).'
+          enum:
+          - front
+          - back
+          - file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (JPEG, PNG for physical; PDF for digital).
+      description: Upload a CNH (driver's license) attachment.
+
+    KycUploadRg:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: rg
+        requirement_id:
+          type: string
+          description: 'Format: `identity_{subject_id}`.'
+          example: identity_003XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: 'RG: `front` and `back`.'
+          enum:
+          - front
+          - back
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (JPEG, PNG).
+      description: Upload an RG (identity card) attachment.
+
+    KycUploadSelfie:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: selfie
+        requirement_id:
+          type: string
+          description: 'Format: `selfie_{subject_id}`.'
+          example: selfie_003XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: photo
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (JPEG, PNG).
+      description: Upload a selfie photo for biometric validation.
+
+    KycUploadProofOfAddress:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: proof_of_address
+        requirement_id:
+          type: string
+          description: 'Format: `proof_of_address_{subject_id}`.'
+          example: proof_of_address_003XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload a proof of address document.
+
+    KycUploadCcmei:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: ccmei
+        requirement_id:
+          type: string
+          description: 'Format: `company_document_{account_id}`.'
+          pattern: '^company_document_.+$'
+          example: company_document_001XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload a CCMEI (Certificado da Condição de Microempreendedor Individual).
+
+    KycUploadEiMei:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: ei_mei
+        requirement_id:
+          type: string
+          description: Identificador do requisito de documentos EI/MEI
+          pattern: '^ei_mei_documents_.+$'
+          example: ei_mei_documents_001XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: 'Two documents required: `ei_registration_requirement` and `ccmei`.'
+          enum:
+          - ei_registration_requirement
+          - ccmei
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload an EI/MEI document (registration requirement or CCMEI).
+
+    KycUploadIncomeStatement:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: income_statement
+        requirement_id:
+          type: string
+          description: Identificador do requisito de declaração de faturamento
+          pattern: '^income_statement_.+$'
+          example: income_statement_001XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload an income statement (DRE).
+
+    KycUploadArticlesOfAssociation:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: articles_of_association
+        requirement_id:
+          type: string
+          description: Identificador do requisito de contrato social
+          pattern: '^articles_of_association_.+$'
+          example: articles_of_association_001XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload articles of association (contrato social).
+
+    KycUploadEireliIncorporation:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - file
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: eireli_incorporation_statement
+        requirement_id:
+          type: string
+          description: Identificador do requisito de ato constitutivo de EIRELI
+          pattern: '^eireli_incorporation_statement_.+$'
+          example: eireli_incorporation_statement_001XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: file
+        file:
+          type: string
+          format: binary
+          description: Binary file upload (PDF, JPEG, PNG).
+      description: Upload an EIRELI incorporation statement (ato constitutivo).
+
+    KycUploadEmail:
+      type: object
+      required:
+      - evidence_type
+      - requirement_id
+      - attachment_type
+      - value
+      properties:
+        evidence_type:
+          type: string
+          description: Tipo de evidência a ser enviada
+          const: email
+        requirement_id:
+          type: string
+          description: 'Format: `email_{subject_id}`.'
+          example: email_003XXXXXXXXXXXXXXX
+        attachment_type:
+          type: string
+          description: Tipo do anexo
+          const: email
+        value:
+          type: string
+          format: email
+          description: Email address for the co-owner (used for CCB digital signature).
+          example: co-owner@example.com
+      description: Submit a co-owner email address for CCB signature.
+
+    BiometricsSession:
+      description: Sessão de biometria para validação de identidade
+      type: object
+      required:
+      - session_url
+      - expires_at
+      properties:
+        session_url:
+          type: string
+          format: uri
+          description: URL for the partner to embed in their flow (webview or redirect)
+          example: https://biometrics.dinie.com.br/session/...
+        expires_at:
+          type: integer
+          format: int64
+          example: 1772748000
+          description: Expiration timestamp (Unix epoch seconds).
     CreditOffer:
       description: Oferta de crédito pré-aprovada para um cliente
+      oneOf:
+      - $ref: '#/components/schemas/FixedInstallmentCreditOffer'
+      - $ref: '#/components/schemas/RangeInstallmentCreditOffer'
+    CreditOfferBase:
+      description: Campos comuns a toda oferta de crédito
       type: object
       required:
       - id
@@ -7068,7 +7401,6 @@ components:
       - approved_amount
       - min_amount
       - monthly_interest_rate
-      - installments
       - valid_until
       - created_at
       - updated_at
@@ -7102,18 +7434,6 @@ components:
           format: double
           description: Monthly interest rate percentage
           example: 3.50
-        installments:
-          type: integer
-          description: Number of installments. Present when the product has a fixed installment count. Mutually exclusive with min_installments/max_installments.
-          example: 12
-        min_installments:
-          type: integer
-          description: Minimum number of installments. Present when the product supports a range. Mutually exclusive with `installments`.
-          example: 3
-        max_installments:
-          type: integer
-          description: Maximum number of installments. Present when the product supports a range. Mutually exclusive with `installments`.
-          example: 12
         due_date_rule:
           type:
           - string
@@ -7132,6 +7452,62 @@ components:
           type: integer
           format: int64
           description: When this resource was last modified (Unix epoch seconds).
+    FixedInstallmentCreditOffer:
+      description: Oferta de crédito com número fixo de parcelas
+      allOf:
+      - $ref: '#/components/schemas/CreditOfferBase'
+      - type: object
+        required:
+        - installments
+        properties:
+          installments:
+            type: integer
+            description: Number of installments for a fixed-term offer
+            example: 12
+      example:
+        id: co_550e8400e29b41d4a716446655440000
+        customer_id: cust_550e8400e29b41d4a716446655440000
+        external_id: partner-ref-123
+        status: available
+        approved_amount: 50000.00
+        min_amount: 200.00
+        monthly_interest_rate: 3.50
+        installments: 12
+        due_date_rule: null
+        valid_until: 1775253599
+        created_at: 1772791200
+        updated_at: 1772877600
+    RangeInstallmentCreditOffer:
+      description: Oferta de crédito com faixa de parcelas selecionável pelo cliente
+      allOf:
+      - $ref: '#/components/schemas/CreditOfferBase'
+      - type: object
+        required:
+        - min_installments
+        - max_installments
+        properties:
+          min_installments:
+            type: integer
+            description: Minimum number of installments the customer may select
+            example: 3
+          max_installments:
+            type: integer
+            description: Maximum number of installments the customer may select
+            example: 12
+      example:
+        id: co_660f9500f30c52e5b827557766551111
+        customer_id: cust_550e8400e29b41d4a716446655440000
+        external_id: partner-ref-456
+        status: available
+        approved_amount: 50000.00
+        min_amount: 200.00
+        monthly_interest_rate: 3.50
+        min_installments: 3
+        max_installments: 12
+        due_date_rule: null
+        valid_until: 1775253599
+        created_at: 1772791200
+        updated_at: 1772877600
     CreateSimulationRequest:
       description: Dados para criar uma simulação de empréstimo
       type: object
@@ -7562,6 +7938,48 @@ components:
             type: string
             description: HMAC signing secret (prefix `whsec_`). Store securely -- shown only once.
             example: whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    WebhookDelivery:
+      description: Registro de uma tentativa de entrega de webhook
+      type: object
+      required:
+      - id
+      - event_type
+      - status
+      - attempt_count
+      - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/WebhookDeliveryId'
+        event_type:
+          type: string
+          description: Tipo de evento desta entrega
+        status:
+          type: string
+          enum:
+          - pending
+          - delivered
+          - failed
+        response_status:
+          type:
+          - integer
+          - 'null'
+          description: HTTP status code from the last delivery attempt (if any)
+        attempt_count:
+          type: integer
+          description: Número de tentativas já executadas
+        delivered_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        failed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
     WebhookSecretRotation:
       description: Resultado da rotação do segredo de assinatura do webhook
       type: object

@@ -178,10 +178,19 @@ RSpec.describe Dinie::Resources::WebhookEndpoints do
       expect(Dinie::WebhookEndpoint.serialize_update).to eq({})
     end
 
-    it "serialize_rotate_secret omits the field when absent, emits it when set" do
-      expect(Dinie::WebhookSecretRotation.serialize_rotate_secret).to eq({})
-      expect(Dinie::WebhookSecretRotation.serialize_rotate_secret(expire_current_in: 3_600))
-        .to eq(expire_current_in: 3_600)
+    it "rotate_secret is pass-through: the resource method sends kwargs as body directly (no serializer wrapper)" do
+      # V0.5: rotate_secret uses anonymous pass-through body (body = fields).
+      # The resource method sends the kwargs hash directly — no serialize_rotate_secret wrapper.
+      # This verifies the resource method behavior (re-uses `resource` and stubs already set up above).
+      rotation_wire = { id: endpoint_id, secret: "whsec_new", previous_secret_expires_at: 3600 }
+      stub_request(:post, url("/webhooks/endpoints/#{endpoint_id}/rotate-secret"))
+        .to_return(status: 200, body: JSON.generate(rotation_wire))
+
+      rotation = resource.rotate_secret(endpoint_id, expire_current_in: 3_600)
+
+      expect(a_request(:post, url("/webhooks/endpoints/#{endpoint_id}/rotate-secret"))
+        .with(body: { expire_current_in: 3_600 })).to have_been_made
+      expect(rotation).to be_a(Dinie::WebhookSecretRotation)
     end
 
     it "deserialize hydrates WebhookEndpointWithSecret with R-ORDER to_h incl. secret, epoch Integers" do
