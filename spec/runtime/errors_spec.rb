@@ -16,7 +16,7 @@ RSpec.describe "Dinie error model" do
     end
 
     it "places markers under APIStatusError" do
-      [Dinie::BadRequestError, Dinie::AuthError, Dinie::PermissionError, Dinie::NotFoundError,
+      [Dinie::BadRequestError, Dinie::AuthError, Dinie::PermissionDeniedError, Dinie::NotFoundError,
        Dinie::ConflictError, Dinie::ValidationError, Dinie::RateLimitError, Dinie::ServerError].each do |klass|
         expect(klass.ancestors).to include(Dinie::APIStatusError), "#{klass} should extend APIStatusError"
       end
@@ -47,11 +47,11 @@ RSpec.describe "Dinie error model" do
 
   describe Dinie::Internal::ERROR_REGISTRY do
     it "maps all 8 contract type URLs to markers (V0.5: forbidden URL now wired — X2)" do
-      # V0.5 intentional change: PermissionError now has its URL wired (no longer a P1 orphan).
+      # V0.5 intentional change: PermissionDeniedError now has its URL wired (no longer a P1 orphan).
       expect(described_class[:by_type]).to eq(
         "https://docs.dinie.com/errors/invalid-request" => Dinie::BadRequestError,
         "https://docs.dinie.com/errors/authentication-failed" => Dinie::AuthError,
-        "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionError,
+        "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionDeniedError,
         "https://docs.dinie.com/errors/not-found" => Dinie::NotFoundError,
         "https://docs.dinie.com/errors/conflict" => Dinie::ConflictError,
         "https://docs.dinie.com/errors/validation-failed" => Dinie::ValidationError,
@@ -63,7 +63,7 @@ RSpec.describe "Dinie error model" do
     it "covers all 8 markers by status" do
       # V0.5: 503 is no longer in by_status (covered by fallback_5xx).
       expect(described_class[:by_status]).to eq(
-        400 => Dinie::BadRequestError, 401 => Dinie::AuthError, 403 => Dinie::PermissionError,
+        400 => Dinie::BadRequestError, 401 => Dinie::AuthError, 403 => Dinie::PermissionDeniedError,
         404 => Dinie::NotFoundError, 409 => Dinie::ConflictError, 422 => Dinie::ValidationError,
         429 => Dinie::RateLimitError, 500 => Dinie::ServerError
       )
@@ -73,10 +73,10 @@ RSpec.describe "Dinie error model" do
       expect(described_class[:fallback_5xx]).to eq(Dinie::ServerError)
     end
 
-    it "includes PermissionError in by_type (V0.5 X2: P1 orphan-URL debt resolved)" do
+    it "includes PermissionDeniedError in by_type (V0.5 X2: P1 orphan-URL debt resolved)" do
       # V0.5 intentional change: the 403 forbidden URL is now wired in the registry.
-      expect(described_class[:by_type].values).to include(Dinie::PermissionError)
-      expect(described_class[:by_status][403]).to eq(Dinie::PermissionError)
+      expect(described_class[:by_type].values).to include(Dinie::PermissionDeniedError)
+      expect(described_class[:by_status][403]).to eq(Dinie::PermissionDeniedError)
     end
 
     it "is frozen end to end" do
@@ -119,9 +119,9 @@ RSpec.describe "Dinie error model" do
     end
 
     context "dispatch by status (no/unknown type URL)" do
-      it "routes a 403 with no type to PermissionError (orphan-URL path)" do
+      it "routes a 403 with no type to PermissionDeniedError (orphan-URL path)" do
         err = described_class.from_response(status: 403, headers: {}, body: JSON.generate({ title: "Forbidden" }))
-        expect(err).to be_a(Dinie::PermissionError)
+        expect(err).to be_a(Dinie::PermissionDeniedError)
       end
 
       it "routes a 404 with no type to NotFoundError" do

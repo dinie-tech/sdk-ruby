@@ -9,7 +9,7 @@ module Dinie
     DEFAULT_TIMEOUT_SECONDS = Internal::HttpClient::DEFAULT_TIMEOUT_SECONDS
     DEFAULT_MAX_RETRIES = Internal::HttpClient::DEFAULT_MAX_RETRIES
 
-    def initialize(client_id: nil, client_secret: nil, base_url: nil, timeout: DEFAULT_TIMEOUT_SECONDS,
+    def initialize(client_id: nil, client_secret: nil, code: nil, base_url: nil, timeout: DEFAULT_TIMEOUT_SECONDS,
                    max_retries: DEFAULT_MAX_RETRIES, idempotency: true, log_level: :off, logger: nil,
                    adapter: nil, token_manager: nil, connection: nil)
       @base_url = first_present(base_url, ENV.fetch("DINIE_BASE_URL", nil)) || Internal::HttpClient::DEFAULT_BASE_URL
@@ -19,7 +19,7 @@ module Dinie
       }
 
       @connection = connection || build_connection(log_level: log_level, logger: logger, adapter: adapter)
-      @token_manager = token_manager || build_token_manager(client_id, client_secret)
+      @token_manager = token_manager || build_token_manager(client_id, client_secret, code)
       @http = Internal::HttpClient.new(
         token_manager: @token_manager, base_url: @base_url, timeout: timeout,
         max_retries: max_retries, idempotency: idempotency, connection: @connection
@@ -28,6 +28,10 @@ module Dinie
 
     def banks
       @banks ||= Resources::Banks.new(@http)
+    end
+
+    def biometrics
+      @biometrics ||= Resources::Biometrics.new(@http)
     end
 
     def credentials
@@ -63,7 +67,7 @@ module Dinie
 
     private
 
-    def build_token_manager(client_id, client_secret)
+    def build_token_manager(client_id, client_secret, code = nil)
       resolved_id = first_present(client_id, ENV.fetch("DINIE_CLIENT_ID", nil))
       resolved_secret = first_present(client_secret, ENV.fetch("DINIE_CLIENT_SECRET", nil))
       raise Dinie::Error, "Missing Dinie client id: pass `client_id:` or set DINIE_CLIENT_ID." if resolved_id.nil?
@@ -73,7 +77,7 @@ module Dinie
 
       Internal::TokenManager.new(
         client_id: resolved_id, client_secret: resolved_secret,
-        base_url: @base_url, connection: @connection
+        base_url: @base_url, connection: @connection, code: code
       )
     end
 

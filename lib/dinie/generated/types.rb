@@ -2,6 +2,7 @@
 
 require_relative "types/bank"
 require_relative "types/biometrics_session"
+require_relative "types/biometrics_session_exchange_response"
 require_relative "types/credential"
 require_relative "types/credit_offer"
 require_relative "types/customer"

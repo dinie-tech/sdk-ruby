@@ -7,7 +7,7 @@ module Dinie
   class BadRequestError < APIStatusError; end
   class ConflictError < APIStatusError; end
   class NotFoundError < APIStatusError; end
-  class PermissionError < APIStatusError; end
+  class PermissionDeniedError < APIStatusError; end
   class RateLimitError < APIStatusError; end
   class ServerError < APIStatusError; end
   class ValidationError < APIStatusError; end
@@ -17,7 +17,7 @@ module Dinie
       by_type: {
         "https://docs.dinie.com/errors/invalid-request" => Dinie::BadRequestError,
         "https://docs.dinie.com/errors/authentication-failed" => Dinie::AuthError,
-        "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionError,
+        "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionDeniedError,
         "https://docs.dinie.com/errors/not-found" => Dinie::NotFoundError,
         "https://docs.dinie.com/errors/conflict" => Dinie::ConflictError,
         "https://docs.dinie.com/errors/validation-failed" => Dinie::ValidationError,
@@ -27,7 +27,7 @@ module Dinie
       by_status: {
         400 => Dinie::BadRequestError,
         401 => Dinie::AuthError,
-        403 => Dinie::PermissionError,
+        403 => Dinie::PermissionDeniedError,
         404 => Dinie::NotFoundError,
         409 => Dinie::ConflictError,
         422 => Dinie::ValidationError,

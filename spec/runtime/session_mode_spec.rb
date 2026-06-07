@@ -18,7 +18,7 @@ require "base64"
 # T4  — lazy constructor (no I/O)
 # T5  — session token expiry → SessionTokenExpiredError
 # T6  — single-flight: N concurrent callers → 1 exchange, all get customer token
-# T9  — bad code → typed API error (AuthError / PermissionError), @exchanged stays false
+# T9  — bad code → typed API error (AuthError / PermissionDeniedError), @exchanged stays false
 RSpec.describe Dinie::Internal::TokenManager, "session mode" do
   let(:base_url) { "https://api.dinie.test/api/v3" }
   let(:client_id) { "client-abc" }
@@ -299,14 +299,14 @@ RSpec.describe Dinie::Internal::TokenManager, "session mode" do
       expect { build_session_manager.access_token }.to raise_error(Dinie::AuthError)
     end
 
-    it "raises PermissionError when exchange returns 403" do
+    it "raises PermissionDeniedError when exchange returns 403" do
       stub_cc(access_token: "cc-tok")
       stub_request(:post, exchange_url).to_return(
         status: 403, body: JSON.generate(type: "https://docs.dinie.com/errors/forbidden",
                                          detail: "forbidden")
       )
 
-      expect { build_session_manager.access_token }.to raise_error(Dinie::PermissionError)
+      expect { build_session_manager.access_token }.to raise_error(Dinie::PermissionDeniedError)
     end
 
     it "does NOT raise SessionTokenExpiredError on exchange failure (T9 vs T5 distinction)" do

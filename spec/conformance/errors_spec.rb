@@ -28,11 +28,11 @@ module ConformanceErrors
   module_function
 
   # openapi error `type` URL → the typed SDK class it must dispatch to (§6/§7, registry.rb).
-  # V0.5: `forbidden` URL now wired to PermissionError (X2 — P1 resolved in @3218365).
+  # V0.5: `forbidden` URL now wired to PermissionDeniedError (X2 — P1 resolved in @3218365).
   TYPE_URL_TO_CLASS = {
     "https://docs.dinie.com/errors/invalid-request" => Dinie::BadRequestError,
     "https://docs.dinie.com/errors/authentication-failed" => Dinie::AuthError,
-    "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionError,
+    "https://docs.dinie.com/errors/forbidden" => Dinie::PermissionDeniedError,
     "https://docs.dinie.com/errors/not-found" => Dinie::NotFoundError,
     "https://docs.dinie.com/errors/conflict" => Dinie::ConflictError,
     "https://docs.dinie.com/errors/validation-failed" => Dinie::ValidationError,
@@ -44,7 +44,7 @@ module ConformanceErrors
   EXPECTED_UNCOVERED = {}.freeze
 
   ALL_CATALOG_CLASSES = %w[
-    BadRequestError AuthError PermissionError NotFoundError
+    BadRequestError AuthError PermissionDeniedError NotFoundError
     ConflictError ValidationError RateLimitError ServerError
   ].freeze
 
@@ -114,8 +114,8 @@ end
 
 # ── Coverage gate ──────────────────────────────────────────────────────────────────────────────
 RSpec.describe "conformance · errors coverage gate" do
-  # V0.5 (@3218365): all 8 catalog classes are covered — PermissionError P1 orphan resolved (X2).
-  it "covers every catalog class by an example (V0.5: all 8 including PermissionError)" do
+  # V0.5 (@3218365): all 8 catalog classes are covered — PermissionDeniedError P1 orphan resolved (X2).
+  it "covers every catalog class by an example (V0.5: all 8 including PermissionDeniedError)" do
     covered = ConformanceErrors::TYPE_URL_TO_CLASS.each_with_object([]) do |(type_url, klass), acc|
       acc << klass.name.split("::").last if ERROR_PLAN.covered_type_urls.include?(type_url)
     end
@@ -133,7 +133,7 @@ RSpec.describe "conformance · errors coverage gate" do
     ].join("\n")
 
     expect(missing).to eq([])
-    # V0.5: PermissionError is now covered (forbidden URL present in @3218365).
+    # V0.5: PermissionDeniedError is now covered (forbidden URL present in @3218365).
     expect(ERROR_PLAN.covered_type_urls).to include(ConformanceErrors::FORBIDDEN_TYPE_URL)
   end
 end

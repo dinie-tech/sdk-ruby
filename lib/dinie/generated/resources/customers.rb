@@ -101,6 +101,13 @@ module Dinie
           raw = @http.request(method: :post, path: "/customers/#{customer_id}/kyc-attachments", body:, request_options:)
           KycAttachmentResponse.deserialize(raw)
         end
+
+        def upload_selfie(customer_id, request_options: {}, **fields)
+          body = fields
+          raw = @http.request(method: :post, path: "/customers/#{customer_id}/kyc-attachments/selfie", body:,
+                              request_options:)
+          KycAttachmentResponse.deserialize(raw)
+        end
       end
     end
   end
