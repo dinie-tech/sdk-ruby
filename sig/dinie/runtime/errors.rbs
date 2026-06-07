@@ -50,6 +50,10 @@ module Dinie
   class OAuthError < Error
   end
 
+  # A session-mode token was successfully exchanged once but has since expired.
+  class SessionTokenExpiredError < Error
+  end
+
   # A webhook payload failed HMAC signature verification.
   class WebhookSignatureError < Error
   end

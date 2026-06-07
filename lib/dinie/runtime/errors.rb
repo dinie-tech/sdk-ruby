@@ -116,6 +116,12 @@ module Dinie
   # OAuth2 client-credentials token acquisition/refresh failed.
   class OAuthError < Error; end
 
+  # A session-mode token was successfully exchanged once but has since expired (via
+  # {Dinie::Internal::TokenManager#invalidate!} or TTL). Session tokens are single-use:
+  # once expired the original authorization code cannot be re-exchanged. Callers should
+  # surface this to the consumer so they can obtain a fresh code.
+  class SessionTokenExpiredError < Error; end
+
   # A webhook payload failed HMAC signature verification.
   class WebhookSignatureError < Error; end
 

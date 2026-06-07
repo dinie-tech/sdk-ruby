@@ -6,13 +6,14 @@ module Dinie
   module Internal
     class TokenManager
       TOKEN_PATH: String
+      SESSION_EXCHANGE_PATH: String
       REFRESH_MARGIN_SECONDS: Integer
       GRANT_BODY: String
       FORM_CONTENT_TYPE: String
       MISSING_ACCESS_TOKEN: String
       MISSING_EXPIRES_IN: String
 
-      def initialize: (client_id: String, client_secret: String, ?base_url: String?, ?connection: untyped, ?refresh_margin_seconds: Integer, ?adapter: Symbol?, ?clock: untyped) -> void
+      def initialize: (client_id: String, client_secret: String, ?base_url: String?, ?connection: untyped, ?refresh_margin_seconds: Integer, ?adapter: Symbol?, ?clock: untyped, ?code: String?) -> void
 
       # Return a valid Bearer access token, acquiring or refreshing transparently.
       def access_token: () -> String
@@ -25,6 +26,13 @@ module Dinie
       def token_valid?: () -> bool
       def refresh_and_cache: () -> String
       def fetch_token: () -> [ String, Numeric ]
+      def fetch_session_token: () -> [ String, Numeric ]
+      def fetch_partner_token: () -> [ String, Numeric ]
+      def fetch_client_credentials_token: () -> String
+      def exchange: (String cc_token, String code) -> [ String, Numeric ]
+      def request_exchange: (String cc_token, String code) -> untyped
+      def parse_exchange_response: (untyped raw_body) -> [ String, Numeric ]
+      def exchange_url: () -> String
       def request_token: () -> untyped
       def parse_token_response: (untyped raw_body) -> [ String, Numeric ]
       def parse_json: (untyped raw_body) -> untyped

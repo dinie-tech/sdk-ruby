@@ -51,6 +51,9 @@ module Dinie
       # Bare token-endpoint path, appended to the configured base URL (which already carries the
       # `/api/v3` version prefix, so the full URL is `…/api/v3/auth/token`).
       TOKEN_PATH = "/auth/token"
+      # Session-exchange endpoint path — step 2 of the two-step session-mode flow. POSTed with
+      # the cc-bearer in `Authorization: Bearer …` and `{ code }` JSON body.
+      SESSION_EXCHANGE_PATH = "/biometrics/session-exchange"
       # Refresh the token this many SECONDS before its stated expiry (300s, `runtime-patterns.md`
       # §4). The margin absorbs clock skew and in-flight latency so a live request never carries a
       # token that expires mid-flight.
@@ -77,14 +80,21 @@ module Dinie
       #   `:net_http_persistent`)
       # @param clock [#call, nil] monotonic-ish "seconds now" source (tests inject a controllable
       #   one to exercise the margin boundary); defaults to wall-clock seconds
+      # @param code [String, nil] session-mode authorization code (from the biometrics flow).
+      #   When present the manager operates in **session mode**: `#access_token` performs a
+      #   two-step exchange (cc-credentials → {SESSION_EXCHANGE_PATH}) exactly once. After the
+      #   session token expires, {Dinie::SessionTokenExpiredError} is raised — the code is
+      #   single-use and cannot be re-exchanged.
       def initialize(client_id:, client_secret:, base_url: nil, connection: nil, # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-                     refresh_margin_seconds: REFRESH_MARGIN_SECONDS, adapter: nil, clock: nil)
+                     refresh_margin_seconds: REFRESH_MARGIN_SECONDS, adapter: nil, clock: nil, code: nil)
         @client_id = client_id
         @client_secret = client_secret
         @base_url = (base_url || HttpClient::DEFAULT_BASE_URL).sub(%r{/+\z}, "")
         @refresh_margin_seconds = refresh_margin_seconds
         @clock = clock || -> { ::Process.clock_gettime(::Process::CLOCK_MONOTONIC) }
         @connection = connection || build_connection(adapter)
+        @code = code
+        @exchanged = false
 
         @mutex = Mutex.new
         @condition = ConditionVariable.new
@@ -156,14 +166,93 @@ module Dinie
         end
       end
 
-      # Perform the token POST and return `[access_token, absolute_expiry_seconds]`. Anchors the
-      # expiry on "now" AFTER the response lands so the margin math holds regardless of latency.
+      # Dispatch to partner mode or session mode. Partner mode (no `code`) performs the standard
+      # client_credentials POST and caches until the margin. Session mode performs the two-step
+      # exchange exactly once; subsequent stale-token paths raise {Dinie::SessionTokenExpiredError}.
       def fetch_token
+        return fetch_partner_token unless @code
+        raise Dinie::SessionTokenExpiredError if @exchanged
+
+        fetch_session_token
+      end
+
+      # Session mode step: cc-credentials → SESSION_EXCHANGE_PATH. Returns
+      # `[customer_access_token, absolute_expiry_seconds]`. Sets `@exchanged` AFTER the POST
+      # succeeds so T9 (exchange failure) leaves `@exchanged = false` and the caller can see
+      # the typed API error (no phantom expiry on the next call).
+      def fetch_session_token
+        cc_token = fetch_client_credentials_token
+        access_token, expires_in = exchange(cc_token, @code)
+        @exchanged = true
+        [access_token, now + expires_in]
+      end
+
+      # Partner mode: a single client_credentials POST, returns
+      # `[access_token, absolute_expiry_seconds]`. The original `fetch_token` body, extracted
+      # so `fetch_token` stays a clean dispatcher.
+      def fetch_partner_token
         response = request_token
         raise Dinie::OAuthError, status_failure(response.status, body_detail(response)) unless success?(response.status)
 
         access_token, expires_in = parse_token_response(response.body)
         [access_token, now + expires_in]
+      end
+
+      # Step 1 of the session two-step: obtain a cc-bearer (used as the Authorization header
+      # on the subsequent exchange POST). Returns only the access_token string.
+      def fetch_client_credentials_token
+        response = request_token
+        raise Dinie::OAuthError, status_failure(response.status, body_detail(response)) unless success?(response.status)
+
+        access_token, = parse_token_response(response.body)
+        access_token
+      end
+
+      # Step 2 of the session two-step: POST SESSION_EXCHANGE_PATH with the cc-bearer and
+      # the authorization code. Returns `[customer_access_token, expires_in]`. Non-2xx raises
+      # the typed API error from {Dinie::Internal::Errors.from_response} (e.g. AuthError on 401).
+      def exchange(cc_token, code)
+        response = request_exchange(cc_token, code)
+        unless success?(response.status)
+          raise Dinie::Internal::Errors.from_response(
+            status: response.status, headers: response.headers.to_h, body: response.body
+          )
+        end
+
+        parse_exchange_response(response.body)
+      end
+
+      # One Faraday round-trip to SESSION_EXCHANGE_PATH. Absolute URL. Transport failures
+      # become {Dinie::OAuthError} (no server response to dispatch on).
+      def request_exchange(cc_token, code)
+        @connection.run_request(
+          :post,
+          exchange_url,
+          JSON.generate(code: code),
+          "authorization" => "Bearer #{cc_token}",
+          "content-type" => "application/json",
+          "accept" => "application/json"
+        )
+      rescue Faraday::Error => e
+        raise Dinie::OAuthError, "Session exchange request failed before a response was received: #{e.message}"
+      end
+
+      # Validate + extract the exchange response, returning `[access_token, expires_in]`.
+      # Raises {Dinie::OAuthError} on structural problems (shape, missing fields).
+      def parse_exchange_response(raw_body)
+        parsed = parse_json(raw_body)
+        raise Dinie::OAuthError, "Session exchange response was not a JSON object." unless parsed.is_a?(Hash)
+
+        access_token = parsed[:access_token]
+        expires_in = parsed[:expires_in]
+        raise Dinie::OAuthError, MISSING_ACCESS_TOKEN unless valid_access_token?(access_token)
+        raise Dinie::OAuthError, MISSING_EXPIRES_IN unless valid_expires_in?(expires_in)
+
+        [access_token, expires_in]
+      end
+
+      def exchange_url
+        "#{@base_url}#{SESSION_EXCHANGE_PATH}"
       end
 
       # One Faraday round-trip to the token endpoint. Absolute URL ⇒ the connection's `url_prefix`
