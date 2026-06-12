@@ -33,6 +33,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency "faraday-multipart", "~> 1.0"
   spec.add_dependency "faraday-net_http_persistent", "~> 2.0"
   spec.add_dependency "net-http-persistent", "~> 4.0"
+  # Formerly-default stdlib gems the runtime requires directly. `base64` left the default gems in
+  # Ruby 3.4 and `logger` in 3.5, so they must be declared or `require "dinie"` breaks on Ruby ≥3.4
+  # (`required_ruby_version >= 3.1`). See lib/dinie/runtime/{token_manager,logger}.rb.
+  spec.add_dependency "base64", "~> 0.2"
+  spec.add_dependency "logger", "~> 1.6"
 
   # Development dependencies (declared here; see `.rubocop.yml` Gemspec/DevelopmentDependencies).
   spec.add_development_dependency "rake", "~> 13.0"

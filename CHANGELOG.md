@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-06-12
+
+### Fixed
+- Declare `base64` and `logger` as runtime dependencies. Both left Ruby's default gems
+  (`base64` in 3.4, `logger` in 3.5) and are required directly by the runtime, so `require "dinie"`
+  raised `LoadError: cannot load such file -- base64` on Ruby ≥3.4 (the gem supports `>= 3.1`).
+
 ## [1.0.0] — 2026-06-12
 
 Initial public release.
