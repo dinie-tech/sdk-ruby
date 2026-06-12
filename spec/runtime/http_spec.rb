@@ -57,14 +57,16 @@ RSpec.describe Dinie::Internal::HttpClient do
     it "sends the User-Agent and X-Dinie-SDK-* headers with the Bearer token" do
       stub_request(:get, url("/x")).to_return(status: 200, body: "{}")
       build_client.request(method: :get, path: "/x")
-      user_agent = %r{\ADinie-SDK-Ruby/0\.0\.1 \(api-version=2026-05-10; ruby/#{Regexp.escape(RUBY_VERSION)}\)\z}
+      version = Dinie::VERSION
+      api_ver = Dinie::Generated::API_VERSION
+      user_agent = %r{\ADinie-SDK-Ruby/#{Regexp.escape(version)} \(api-version=#{Regexp.escape(api_ver)}; ruby/#{Regexp.escape(RUBY_VERSION)}\)\z}
       expect(
         a_request(:get, url("/x")).with(headers: {
                                           "User-Agent" => user_agent,
                                           "Accept" => "application/json",
                                           "Authorization" => "Bearer token-1",
                                           "X-Dinie-Sdk-Language" => "ruby",
-                                          "X-Dinie-Sdk-Version" => "0.0.1",
+                                          "X-Dinie-Sdk-Version" => version,
                                           "X-Dinie-Sdk-Runtime" => "ruby/#{RUBY_VERSION}"
                                         })
       ).to have_been_made

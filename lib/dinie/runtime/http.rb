@@ -56,8 +56,8 @@ module Dinie
       DEFAULT_TIMEOUT_SECONDS = 30
       # Default retry budget after the first attempt.
       DEFAULT_MAX_RETRIES = 3
-      # API version pin for telemetry (placeholder in V0.3; generator-sourced later).
-      API_VERSION = "2026-05-10"
+      # API version sourced from the generated constant (keeps telemetry in sync with the spec).
+      API_VERSION = Dinie::Generated::API_VERSION
       # `Content-Type` for JSON request bodies.
       JSON_CONTENT_TYPE = "application/json"
       # Methods that auto-carry an `X-Idempotency-Key` when the caller does not say otherwise.

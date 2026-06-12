@@ -1,0 +1,44 @@
+name: Tag and Release on generator-bump PR merge
+
+# D8: Publish trigger = push to tag v*. D9: Tag pushed with the GitHub App token, NOT
+# GITHUB_TOKEN (a GITHUB_TOKEN-pushed tag does NOT trigger publish.yml — GitHub anti-recursion).
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  tag:
+    name: Tag version from Dinie::VERSION
+    runs-on: ubuntu-latest
+    # Guard: only merged PRs with the `generator-bump` label
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'generator-bump')
+
+    steps:
+      - name: Mint GitHub App token (D9 — App token, not GITHUB_TOKEN, so tag triggers publish.yml)
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Checkout main with App token
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          ref: main
+
+      - name: Read Dinie::VERSION
+        id: version
+        run: |
+          VERSION=$(ruby -e "require_relative 'lib/dinie/version'; puts Dinie::VERSION")
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag (App token ensures publish.yml fires — D9)
+        run: |
+          git config user.name  "dinie-sdk-app[bot]"
+          git config user.email "dinie-sdk-app[bot]@users.noreply.github.com"
+          git tag "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
