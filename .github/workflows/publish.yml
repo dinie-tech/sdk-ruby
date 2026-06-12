@@ -1,0 +1,58 @@
+name: Publish to RubyGems
+
+# Triggered by a version tag pushed by tag-release.yml (D8/D9: App-token push bypasses
+# the GitHub anti-recursion guard that would suppress publish.yml on GITHUB_TOKEN pushes).
+on:
+  push:
+    tags:
+      - "v*"
+
+# Keyless OIDC auth — no RUBYGEMS_API_KEY required (DoD #2 falsifier: any RUBYGEMS_API_KEY
+# in this job or in the repo secrets is a regression). The `rubygems` Environment is
+# user-created (pending-publisher registration step required by the user).
+jobs:
+  publish:
+    name: Build + publish dinie-sdk to RubyGems (OIDC)
+    runs-on: ubuntu-latest
+    environment: rubygems
+    permissions:
+      contents: write   # needed by softprops/action-gh-release to create the GitHub Release
+      id-token: write   # OIDC trusted publishing — the keyless credential (no RUBYGEMS_API_KEY)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # never expose GITHUB_TOKEN to subsequent steps
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true          # runs bundle install and caches gems
+
+      # rubygems/release-gem@v1 handles the full keyless publish flow:
+      #   1. configure-trusted-publisher → exchanges OIDC token for a RubyGems API key
+      #   2. gem build dinie.gemspec
+      #   3. gem push dinie-sdk-*.gem (to rubygems.org)
+      # No explicit `gem push` / no `RUBYGEMS_API_KEY` needed — OIDC satisfies MFA too.
+      - name: Build and publish gem (OIDC keyless)
+        uses: rubygems/release-gem@v1
+
+      - name: Extract CHANGELOG section for the release body
+        id: extract_changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SECTION=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          {
+            echo "section<<EOF"
+            echo "$SECTION"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.extract_changelog.outputs.section }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

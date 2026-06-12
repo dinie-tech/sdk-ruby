@@ -11,6 +11,8 @@
 # those files exist. Uncomment each line in the story that introduces the file.
 
 require_relative "dinie/version"
+# api_version is generated but must load before runtime/http which references the constant.
+require_relative "dinie/generated/api_version"
 
 # --- runtime (hand-written — CODEOWNER humans — stories 002–005) ---------------
 require_relative "dinie/runtime/model"

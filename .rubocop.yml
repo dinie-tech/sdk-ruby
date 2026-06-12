@@ -50,3 +50,15 @@ Metrics/CyclomaticComplexity:
 Metrics/PerceivedComplexity:
   Exclude:
     - "lib/dinie/generated/**/*"
+
+# The generator emits YARD docstrings verbatim (no line-wrapping) from the real spec.
+# Some descriptions exceed 120 chars. Scoped to the generated dir and test files (L10/lessons.md).
+Layout/LineLength:
+  Exclude:
+    - "lib/dinie/generated/**/*"
+    - "spec/**/*"
+
+# Generated dispatch tables (e.g. credit_offer discriminator) legitimately repeat branches.
+Lint/DuplicateBranch:
+  Exclude:
+    - "lib/dinie/generated/**/*"

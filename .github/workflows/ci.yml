@@ -20,20 +20,74 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true # runs `bundle install` and caches gems
+          bundler-cache: true  # runs `bundle install` and caches gems
 
       - name: RuboCop
         run: bundle exec rubocop
 
       - name: RSpec
+        # SKIP_GEM_BUILD avoids the gem-build+clean-install subtests in CI
+        # (those run locally/on-publish; CI validates source-level packaging assertions).
         run: bundle exec rspec
+        env:
+          SKIP_GEM_BUILD: "1"
 
-      # Steep runs against the full RBS mirror in `sig/` (story 013). It is INFORMATIVE
-      # (non-blocking) in v1 — §21.3 decision, confirmed in story 013: the public surface + runtime
-      # type-check, and the bounded residual is Steep's static-analysis limits against idiomatic
-      # Ruby (the `**fields` splat idiom + stdlib empty-collection inference), NOT type errors. See
-      # the Steepfile header for the residual breakdown and the promotion-to-blocking path. No
-      # `sdk-generator --check` here — the generator is V0.4.
       - name: Steep (informative)
         run: bundle exec steep check
         continue-on-error: true
+
+  # Drift gate (DoD #8/D7): hermetic sdk-generator check --target ruby.
+  # Verifies the committed lib/dinie/generated/ matches what the current generator would emit
+  # from the vendored golden spec. Edit => red; revert => green.
+  drift:
+    name: drift gate (sdk-generator check --target ruby)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout SDK (target)
+        uses: actions/checkout@v4
+        with:
+          path: sdk
+
+      - name: Mint GitHub App token (org-scoped — generator access)
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: dinie-tech
+
+      - name: Checkout generator
+        uses: actions/checkout@v4
+        with:
+          repository: dinie-tech/sdk-generator
+          token: ${{ steps.app_token.outputs.token }}
+          path: .gen
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.5"
+
+      - name: Install generator deps
+        run: bun install
+        working-directory: .gen
+
+      # Set up Ruby so rubocop is available for the generator's format step.
+      - name: Set up Ruby (for generator format gate)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+
+      - name: Install rubocop (for generator format gate)
+        run: gem install rubocop -v "~> 1.60" --no-document
+
+      - name: Run hermetic drift check
+        # sdk-generator check --target ruby --output <sdk-path> compares the committed
+        # lib/dinie/generated/ against what the generator would emit from its vendored golden
+        # spec. Any divergence is reported and the step exits non-zero (red gate).
+        run: |
+          cd .gen
+          ASDF_RUBY_VERSION=3.3.10 bun src/cli.ts check --target ruby \
+            --output "$GITHUB_WORKSPACE/sdk" --no-lint
