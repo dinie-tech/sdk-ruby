@@ -6,9 +6,8 @@
 # the verification mechanics under test. Wire shapes/values come from `openapi.yaml @ 3218365`.
 #
 # The `webhook_event_table` is verbose fixture DATA (15 events × multi-line `data` wires), so the
-# Metrics length cops are disabled for this support file — same intent as the generated layer's
-# `.rubocop.yml` excludes, applied locally.
-# rubocop:disable Metrics/ModuleLength, Metrics/MethodLength
+# Metrics length cops are excluded for this support file in `.rubocop.yml` — same intent as the
+# generated layer's excludes.
 module WebhookEventFixtures
   # An embedded KYC requirement (the only reused sub-object hydrator — story 009 discriminated union).
   def kyc_requirement_wire
@@ -147,4 +146,3 @@ module WebhookEventFixtures
     "v1,#{base64_strict(digest)}"
   end
 end
-# rubocop:enable Metrics/ModuleLength, Metrics/MethodLength

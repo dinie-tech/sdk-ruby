@@ -32,6 +32,10 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Exclude:
     - "lib/dinie/generated/**/*"
+    - "spec/support/webhook_event_fixtures.rb"
+Metrics/ModuleLength:
+  Exclude:
+    - "spec/support/webhook_event_fixtures.rb"
 Metrics/AbcSize:
   Exclude:
     - "lib/dinie/generated/**/*"
