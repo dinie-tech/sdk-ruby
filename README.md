@@ -59,7 +59,7 @@ Pass options to the constructor, or let the SDK read them from the environment.
 client = Dinie::Client.new(
   client_id:     "dinie_ci_…",   # or ENV["DINIE_CLIENT_ID"]
   client_secret: "…",            # or ENV["DINIE_CLIENT_SECRET"]
-  base_url:      nil,            # or ENV["DINIE_BASE_URL"]; default https://api.dinie.com.br/api/v3
+  base_url:      nil,            # or ENV["DINIE_BASE_URL"]; default https://api.dinie.com/api/v3
   timeout:       30,            # per-request timeout, in SECONDS
   max_retries:   3,            # retries after the first attempt
   idempotency:   true,        # auto X-Idempotency-Key on POST/PATCH

@@ -46,6 +46,12 @@ RSpec.describe Dinie::Internal::HttpClient do
       expect(a_request(:get, "https://api.dinie.test/api/v3/customers")).to have_been_made
     end
 
+    it "calls the production API under /api/v3 when no base_url is configured" do
+      stub_request(:get, "https://api.dinie.com/api/v3/customers").to_return(status: 200, body: "{}")
+      described_class.new(token_manager: token_manager, sleeper: sleeper).request(method: :get, path: "/customers")
+      expect(a_request(:get, "https://api.dinie.com/api/v3/customers")).to have_been_made
+    end
+
     it "appends query params and drops nil values" do
       stub_request(:get, url("/customers")).with(query: { limit: "50" }).to_return(status: 200, body: "{}")
       build_client.request(method: :get, path: "/customers", query: { limit: 50, starting_after: nil })

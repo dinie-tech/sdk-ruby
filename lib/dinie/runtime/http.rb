@@ -51,7 +51,7 @@ module Dinie
     class HttpClient # rubocop:disable Metrics/ClassLength
       # Default production API base URL — carries the `/api/v3` version prefix (openapi
       # `servers[0]`). Resource paths are bare (`/customers`), so the version lives here.
-      DEFAULT_BASE_URL = "https://api.dinie.com.br/api/v3"
+      DEFAULT_BASE_URL = "https://api.dinie.com/api/v3"
       # Default per-request timeout, in **seconds** (RB17 — Faraday idiom; the TS SDK uses ms).
       DEFAULT_TIMEOUT_SECONDS = 30
       # Default retry budget after the first attempt.
@@ -139,11 +139,11 @@ module Dinie
 
       # The retry loop. `attempt` increments on every continued path (a transport retry, a
       # status retry, AND the 401 one-shot), so `X-Dinie-Retry-Count` mirrors the TS SDK exactly.
-      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/BlockLength
+      # rubocop:disable-next Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def execute(prepared)
         attempt = 0
         reauthed = false
-        loop do
+        loop do # rubocop:disable Metrics/BlockLength
           token = @token_manager.access_token
           headers = build_headers(prepared, token, attempt)
 
@@ -183,7 +183,6 @@ module Dinie
           raise build_error(response)
         end
       end
-      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/BlockLength
 
       # One Faraday round-trip. Absolute URL ⇒ the connection's `url_prefix` is irrelevant, so
       # `base_url='…/api/v3'` never collides with a leading-slash resource path.
