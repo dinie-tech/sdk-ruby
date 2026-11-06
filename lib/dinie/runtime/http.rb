@@ -51,7 +51,7 @@ module Dinie
     class HttpClient # rubocop:disable Metrics/ClassLength
       # Default production API base URL — carries the `/api/v3` version prefix (openapi
       # `servers[0]`). Resource paths are bare (`/customers`), so the version lives here.
-      DEFAULT_BASE_URL = "https://api.dinie.com.br/api/v3"
+      DEFAULT_BASE_URL = "https://api.dinie.com/api/v3"
       # Default per-request timeout, in **seconds** (RB17 — Faraday idiom; the TS SDK uses ms).
       DEFAULT_TIMEOUT_SECONDS = 30
       # Default retry budget after the first attempt.
