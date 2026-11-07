@@ -17,6 +17,17 @@ RSpec.describe Dinie::Internal::HttpClient do
     "#{base_url}#{path}"
   end
 
+  def key_in_use_problem
+    {
+      type: "https://docs.dinie.com/errors/conflict",
+      title: "Conflict",
+      status: 409,
+      detail: "A request with this idempotency key is still running. Retry after it finishes.",
+      code: "idempotency_key_in_use",
+      request_id: "0b9f3c1e-6d2a-4c53-9a54-7e1b0f2f8a11"
+    }
+  end
+
   describe "transport + success" do
     it "returns a JSON body parsed with symbol keys (resources deserialize it)" do
       stub_request(:get, url("/customers"))
@@ -102,6 +113,41 @@ RSpec.describe Dinie::Internal::HttpClient do
       expect { build_client.request(method: :post, path: "/c", body: { a: 1 }) }.to raise_error(Dinie::ConflictError)
       expect(a_request(:post, url("/c"))).to have_been_made.times(1)
       expect(slept).to be_empty
+    end
+
+    it "does NOT retry a 409 with another code (email_already_exists), even with a Retry-After" do
+      stub_request(:post, url("/c"))
+        .to_return(status: 409, headers: { "Retry-After" => "1" },
+                   body: key_in_use_problem.merge(code: "email_already_exists").to_json)
+      expect { build_client.request(method: :post, path: "/c", body: { a: 1 }) }.to raise_error(Dinie::ConflictError)
+      expect(a_request(:post, url("/c"))).to have_been_made.times(1)
+      expect(slept).to be_empty
+    end
+
+    it "retries a 409 idempotency_key_in_use with the same key, after its Retry-After, and returns the replay" do
+      keys = []
+      replies = [
+        { status: 409, headers: { "Retry-After" => "1" }, body: key_in_use_problem.to_json },
+        { status: 201, headers: { "Idempotent-Replayed" => "true" }, body: '{"id":"c_1"}' }
+      ]
+      stub_request(:post, url("/c")).to_return do |request|
+        keys << request.headers["X-Idempotency-Key"]
+        replies.shift
+      end
+      result = build_client.request(method: :post, path: "/c", body: { a: 1 })
+      expect(result).to eq(id: "c_1")
+      expect(keys.size).to eq(2)
+      expect(keys.uniq.size).to eq(1)
+      expect(slept).to eq([1.0])
+    end
+
+    it "stops retrying a 409 idempotency_key_in_use at the retry budget and raises ConflictError" do
+      stub_request(:post, url("/c"))
+        .to_return(status: 409, headers: { "Retry-After" => "1" }, body: key_in_use_problem.to_json)
+      expect { build_client(max_retries: 2).request(method: :post, path: "/c", body: { a: 1 }) }
+        .to raise_error(Dinie::ConflictError)
+      expect(a_request(:post, url("/c"))).to have_been_made.times(3)
+      expect(slept).to eq([1.0, 1.0])
     end
 
     it "does NOT retry 410 (gone) → generic APIStatusError, one request" do
