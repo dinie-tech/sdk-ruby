@@ -24,6 +24,21 @@ RSpec.describe Dinie::Internal::Retry do
     end
   end
 
+  describe ".idempotency_key_in_use?" do
+    it "is true for a 409 whose code is idempotency_key_in_use" do
+      expect(described_class.idempotency_key_in_use?(409, "idempotency_key_in_use")).to be(true)
+    end
+
+    it "is false for a 409 with any other code, or none" do
+      expect(described_class.idempotency_key_in_use?(409, "email_already_exists")).to be(false)
+      expect(described_class.idempotency_key_in_use?(409, nil)).to be(false)
+    end
+
+    it "is false for the same code on another status" do
+      expect(described_class.idempotency_key_in_use?(422, "idempotency_key_in_use")).to be(false)
+    end
+  end
+
   describe ".retryable_network_error?" do
     it "retries a Faraday timeout" do
       expect(described_class.retryable_network_error?(Faraday::TimeoutError.new)).to be(true)

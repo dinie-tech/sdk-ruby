@@ -247,7 +247,9 @@ Dinie::Error
 ```
 
 Retries are automatic for `408/429/500/502/503/504` and transport errors (exponential backoff with
-jitter, honoring `Retry-After` up to 60s). `409`/`410` are never retried. A stable
+jitter, honoring `Retry-After` up to 60s). `410` is never retried, and neither is a `409`, except
+the one coded `idempotency_key_in_use` (another request with the same key is still running),
+which is retried with the same key after its `Retry-After` and returns the stored response. A stable
 `X-Idempotency-Key` is minted once per logical write and reused across retries, so a retry never
 creates a duplicate resource.
 

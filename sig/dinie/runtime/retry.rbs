@@ -8,6 +8,7 @@ module Dinie
       INITIAL_BACKOFF_SECONDS: Float
       MAX_BACKOFF_SECONDS: Integer
       JITTER_RATIO: Float
+      IDEMPOTENCY_KEY_IN_USE_CODE: String
       RETRYABLE_NETWORK_ERRORS: Array[untyped]
 
       # `module_function`: declared as instance methods (so `self`-typing is the module) plus
@@ -16,6 +17,10 @@ module Dinie
       # True only for the retryable status set (`{408, 429, 500, 502, 503, 504}`).
       def should_retry?: (Integer status) -> bool
       def self.should_retry?: (Integer status) -> bool
+
+      # True for the 409 sent while a request with the same idempotency key is still running.
+      def idempotency_key_in_use?: (Integer status, String? code) -> bool
+      def self.idempotency_key_in_use?: (Integer status, String? code) -> bool
 
       # Whether a thrown transport error (no HTTP response) is worth retrying (timeout/conn failure).
       def retryable_network_error?: (Exception error) -> bool

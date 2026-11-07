@@ -40,6 +40,7 @@ module Dinie
       private
 
       def execute: (untyped prepared) -> untyped
+      def response_retry_delay: (Integer attempt, untyped response) -> Float
       def dispatch: (untyped prepared, Hash[String, untyped] headers) -> untyped
       def build_headers: (untyped prepared, String token, Integer attempt) -> Hash[String, untyped]
       def base_headers: (String token) -> Hash[String, String]

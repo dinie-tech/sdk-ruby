@@ -26,7 +26,9 @@ module Dinie
     #   8. on a retryable status (`{408,429,500,502,503,504}`) or a transient transport error,
     #      back off (`Retry.retry_delay`) and retry while attempts remain, bumping
     #      `X-Dinie-Retry-Count`;
-    #   9. otherwise map the response to a typed error via {Errors.from_response}.
+    #   9. on a 409 `idempotency_key_in_use` (the request holding the same key is still running),
+    #      retry like a retryable status, with the same key;
+    #  10. otherwise map the response to a typed error via {Errors.from_response}.
     #
     # ── DI seam (architecture §10, RB15) ──
     # The `TokenManager` is **injected** (`HttpClient.new(token_manager:, …)`). Story 004 builds
@@ -173,15 +175,28 @@ module Dinie
           raise build_error(response, force: Dinie::AuthError) if status == 401
 
           if Retry.should_retry?(status) && attempt < prepared.max_retries
-            sleep_for(Retry.retry_delay(attempt,
-                                        retry_after: header(response, "retry-after"),
-                                        retry_after_ms: header(response, "retry-after-ms")))
+            sleep_for(response_retry_delay(attempt, response))
             attempt += 1
             next
           end
 
-          raise build_error(response)
+          failure = build_error(response)
+          if Retry.idempotency_key_in_use?(status, failure.code) && attempt < prepared.max_retries
+            sleep_for(response_retry_delay(attempt, response))
+            attempt += 1
+            next
+          end
+
+          raise failure
         end
+      end
+
+      # Seconds to wait before retrying `response`: its `Retry-After` / `Retry-After-Ms` header,
+      # else the exponential backoff for `attempt`.
+      def response_retry_delay(attempt, response)
+        Retry.retry_delay(attempt,
+                          retry_after: header(response, "retry-after"),
+                          retry_after_ms: header(response, "retry-after-ms"))
       end
 
       # One Faraday round-trip. Absolute URL ⇒ the connection's `url_prefix` is irrelevant, so

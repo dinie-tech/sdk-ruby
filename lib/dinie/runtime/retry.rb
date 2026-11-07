@@ -16,8 +16,10 @@ module Dinie
       # HTTP status codes the SDK retries (V0.2 freeze decision; architecture §10).
       #
       # Exactly `{408, 429, 500, 502, 503, 504}`, plus timeouts/connection errors (handled by
-      # {retryable_network_error?}). `409` (Dinie semantic conflict) and `410` (gone) **never**
-      # retry; `401` is a one-shot re-auth handled in {HttpClient}, orthogonal to this set.
+      # {retryable_network_error?}). `410` (gone) **never** retries, and neither does a `409`
+      # (Dinie semantic conflict) except the `idempotency_key_in_use` one
+      # ({idempotency_key_in_use?}); `401` is a one-shot re-auth handled in {HttpClient},
+      # orthogonal to this set.
       # `500` is safe to retry on a non-GET because the stable `X-Idempotency-Key` (minted once
       # before the loop) guarantees a retry never creates a duplicate resource.
       RETRYABLE_STATUS = Set[408, 429, 500, 502, 503, 504].freeze
@@ -28,6 +30,9 @@ module Dinie
       MAX_BACKOFF_SECONDS = 8
       # Subtractive jitter fraction — the delay is reduced by up to this share.
       JITTER_RATIO = 0.25
+      # Problem `code` of the 409 sent while another request with the same idempotency key is
+      # still running.
+      IDEMPOTENCY_KEY_IN_USE_CODE = "idempotency_key_in_use"
 
       # Faraday transport errors (no HTTP response) worth retrying: a request timeout and a
       # connection failure (DNS/refused/reset). Anything else propagates as a connection error.
@@ -41,6 +46,17 @@ module Dinie
       # @return [Boolean]
       def should_retry?(status)
         RETRYABLE_STATUS.include?(status)
+      end
+
+      # True for the 409 the API sends while a request with the same idempotency key is still
+      # running. It is retried like a `429`: same key, after its `Retry-After`. Any other 409 is a
+      # final answer.
+      #
+      # @param status [Integer]
+      # @param code [String, nil] the Problem Details `code` of the response
+      # @return [Boolean]
+      def idempotency_key_in_use?(status, code)
+        status == 409 && code == IDEMPOTENCY_KEY_IN_USE_CODE
       end
 
       # Whether a thrown transport error (no HTTP response) is worth retrying: a timeout or a
